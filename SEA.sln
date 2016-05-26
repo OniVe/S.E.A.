@@ -7,6 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SEA.P", "SEA.P\SEA.P.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SEA.GM", "SEA.GM\SEA.GM.csproj", "{20747327-396B-49AB-ADAF-BB66B78D94A1}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utilities", "Utilities", "{D565CB77-FE64-467B-A37D-963C13EEE55D}"
+	ProjectSection(SolutionItems) = preProject
+		Utilities\netsh.delete.bat = Utilities\netsh.delete.bat
+		Utilities\netsh.update.bat = Utilities\netsh.update.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

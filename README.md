@@ -19,8 +19,8 @@ S.E.A. - Space Engineer Assistant, Workshop mod for the game "Space Engineers" h
 1.  Set the port (if necessary) [9000 by default]
  *  Open file **"SAMP.dll.config"** located in the directory of the game **".\Bin64"** via notepad
  *  Change the value to the desired value 9000 on the **<add key = "port" value = "9000" />**
- *  In file "netsh.bat" change the value of 9000, on the desired value in the **"set port = 9000"**
-2.  Run **"\Utilities\netsh.update.bat"** from administrator
+ *  In file **"Utilities\netsh.update.bat"** change the value of 9000, on the desired value in the **"set port = 9000"**
+2.  Run **"Utilities\netsh.update.bat"** from administrator
 
 ###   The order of updating from the old version:
 1.  Delete the directory **"web"** in the root directory of the server **"SEA.P.dll"**
@@ -29,5 +29,5 @@ S.E.A. - Space Engineer Assistant, Workshop mod for the game "Space Engineers" h
 -
 
 ##   ! Warning !
-If you run the MOD (**SEA.GM**) without connected plugin server (**SEA.P.dll**), it is raise an **error** when you try to save the game. ***(Saving files will not be damaged)***.
+* If you run the MOD (**SEA.GM**) without connected plugin server (**SEA.P.dll**), it is raise an **error** when you try to save the game. ***(Saving files will not be damaged)***.
 
