@@ -833,7 +833,6 @@ $.widget( "sea_ui.sidebarmenu", {
 				autoOpen  : true,
 				autoRemove: true,
 			}).element
-			.append("<div class='donate-group'><a target='_blank' href='https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=mail@onive.ru&lc=RU&item_name=Space%20Engineers%20Mod%20-%20S.E.A.&item_number=014&currency_code="+ (Languages.locale() === "ru" ? "RUB" : "USD") +"&bn=PP-DonationsBF:88bf25a8f528.png:NonHosted'><div class='donate-button sea-text-normal'>"+ L("#donate") +"</div></a></div>")
 			.append(Helpers.paragraph(L("#sea-ui-help-header-about"), L("#sea-ui-help-content-about")))
 			.append(Helpers.paragraph(L("#sea-ui-help-header-terms"), L("#sea-ui-help-content-terms")))
 			.append(Helpers.paragraph(L("#sea-ui-help-header-how_it_works"), L("#sea-ui-help-content-how_it_works")))
