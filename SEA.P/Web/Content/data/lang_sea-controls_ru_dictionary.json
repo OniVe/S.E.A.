@@ -1,0 +1,17 @@
+{
+"#sea-controls-multitouch": "S.E.A. Мультитач",
+"#sea-control-button": "Простая Кнопка",
+"#sea-control-button-phase": "Фаза",
+"#sea-control-button-phase-up": "Отпустить",
+"#sea-control-button-phase-down": "Нажать",
+"#sea-control-slider": "Бегунок",
+"#sea-control-slider-round": "Округлять",
+"#sea-control-switch": "Переключатель",
+"#sea-control-switch-mode": "Метод",
+"#sea-control-switch-mode-shift": "Сдвиг",
+"#sea-control-switch-mode-press": "Нажатие",
+"#sea-control-handwheel": "Маховичок (Альфа)",
+"#sea-control-handwheel-convert": "Конвертировать",
+"#sea-control-handwheel-convert-pix2": "0-360°",
+"#sea-control-handwheel-convert-pm_pi": "± 180°"
+}

@@ -1,0 +1,56 @@
+﻿<!--Files are created by default if not found
+Files must be in directories: (case sensitive)
+    .\web\html\
+    .\web\script\
+    .\web\css\
+    .\web\img\
+    .\web\data\
+Supported file extensions
+    Scipt:
+        <script src="/res/myScript.js"></script>
+    Style:
+        <link rel="stylesheet" href="/res/myStyle.css">
+    Image:
+        <img src="/res/myImage.png"/>
+        <img src="/res/myImage.jpg" />
+        <img src="/res/myImage.jpeg" />
+        <img src="/res/myImage.gif" />
+        <img src="/res/myImage.svg" />
+    Font:
+        url('/res/myFont.ttf') format('truetype')
+        url('/res/myFont.otf') format('embedded-opentype')
+        url('/res/myFont.woff') format('woff')
+    Data:
+        any path '/res/myData.json'-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <title>S.E.A. Dashboard</title>
+    <link rel="stylesheet" href="/res/global.css">
+    <link rel="stylesheet" href="/res/sea-ui.css">
+</head>
+<body>
+    <div id="sea_ui">
+        <div id="sea_main_menu"></div>
+        <div id="sea_dashboard"></div>
+        <div class="signature sea-text">OniVe</div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="/res/jquery-1.12.3.min.js"></script>
+    <script src="/res/jquery-ui-1.11.4.min.js"></script>
+    <script src="/res/jquery.plugins.js"></script>
+    <script src="/res/jquery-ui.plugins.js"></script>
+    <!-- SignalR -->
+    <script src="/res/jquery.signalR-2.2.0.min.js"></script>
+    <script src="/signalr/hubs"></script>
+    <!-- SEA Core-->
+    <script src="/res/sea-core.js"></script>
+    <!-- Controls -->
+    <script src="/res/sea-controls.js"></script>
+    <!-- SEA UI -->
+    <script src="/res/sea-ui.js"></script>
+</body>
+</html>

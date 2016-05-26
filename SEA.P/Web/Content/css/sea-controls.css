@@ -1,0 +1,68 @@
+﻿
+.sea-controlunit{
+position:absolute;
+top:0;
+right:0;
+bottom:0;
+left:0;
+padding:5px;
+background-color:rgb(255,255,255);
+border:2px solid rgb(151,175,207);
+}
+
+.sea-button{}
+.sea-button > .button {
+position:relative;
+width:100%;
+height:100%;
+background-color:rgb(151,175,207);
+}
+.sea-button > .button.touchend {background-color:rgb(151,175,207) !important;}
+.sea-button > .button.touchstart {background-color:rgb(62,95,138) !important;}
+
+.sea-slider{}
+.sea-slider > .track{
+position:relative;
+width:100%;
+height:100%;
+}
+.sea-slider > .track > .slider {
+position:relative;
+width:100%;
+height:100%;
+background-color:rgb(151,175,207);
+}
+.sea-slider > .track > .slider.touchend {background-color:rgb(151,175,207) !important;}
+.sea-slider > .track  > .slider.touchstart {background-color:rgb(62,95,138) !important;}
+
+.sea-switch{}
+.sea-switch > .track{
+position:relative;
+width:100%;
+height:100%;
+box-sizing:border-box;
+border:1px solid rgb(151,175,207);
+}
+.sea-switch > .track.on{background-color:rgba(151,175,207,.65);}
+.sea-switch > .track > .slider {
+position:relative;
+width:100%;
+height:100%;
+background-color:rgb(151,175,207);
+}
+.sea-switch > .track > .slider.touchend{background-color:rgb(151,175,207) !important;}
+.sea-switch > .track  > .slider.touchstart{background-color:rgb(62,95,138) !important;}
+
+.sea-handwheel{
+padding:0;
+border:none;
+background-color:transparent;
+}
+.sea-ui-control-wrapper > .sea-handwheel-label{
+position:absolute;
+width:100%;
+height:.8em;
+text-align:center;
+margin-top:-.4em;
+font-size:.8em;
+}

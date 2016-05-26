@@ -1,0 +1,17 @@
+﻿{
+"#sea-controls-multitouch": "S.E.A. Multi-touch",
+"#sea-control-button": "Simple Button",
+"#sea-control-button-phase": "Phase",
+"#sea-control-button-phase-up": "Up",
+"#sea-control-button-phase-down": "Down",
+"#sea-control-slider": "Slider",
+"#sea-control-slider-round": "Round",
+"#sea-control-switch": "Switch",
+"#sea-control-switch-mode": "Mode",
+"#sea-control-switch-mode-shift": "Shift",
+"#sea-control-switch-mode-press": "Press",
+"#sea-control-handwheel": "Handwheel (Alpha)",
+"#sea-control-handwheel-convert": "Convert",
+"#sea-control-handwheel-convert-pix2": "0-360°",
+"#sea-control-handwheel-convert-pm_pi": "± 180°"
+}
