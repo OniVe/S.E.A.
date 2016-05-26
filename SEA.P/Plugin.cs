@@ -20,7 +20,7 @@ namespace SEA.P
                 if (Models.Settings.launchBrowserOnStartup)
                 {
                     MySandboxGame.Log.WriteLineAndConsole("S.E.A: Opening the browser page...");
-                    System.Diagnostics.Process.Start(port == 80 ? "http://localhost/" : "http://localhost:" + port.ToString() + "/");
+                    System.Diagnostics.Process.Start($"http://localhost:{port.ToString()}/");
                 }
             }
             else
