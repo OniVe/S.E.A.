@@ -8,7 +8,7 @@ S.E.A. - Space Engineer Assistant, Workshop mod for the game "Space Engineers" h
 4.  Menu **"Library"** -> press the right mouse button on the game **"Space Engineers"** -> Properties
 5.  In the window **"Space Engineers - Properties"** select the **"Local files"** tab
 6.  On the Advanced tab click **"BROWSE LOCAL FILES"**
-7.  In the Explorer window, go to the folder **"Bin64"** and copy the contents of an archive
+7.  In the Explorer window, go to the folder **"Bin64"** and copy into it the contents of the directory **"SEA.P"** from the unpacked archive
 8.  Close the Explorer window
 9.  In the window **"Space Engineers - Properties"** select the **"General"** tab
 10. Press the **"SET LAUNCH OPTIONS..."**
@@ -24,7 +24,7 @@ S.E.A. - Space Engineer Assistant, Workshop mod for the game "Space Engineers" h
 
 ###   The order of updating from the old version:
 1.  Delete the directory **"web"** in the root directory of the server **"SEA.P.dll"**
-2.  Copy the configuration file **"storage.s3db"** in the root directory of the server **"SEA.P.dll"**
+2.  Copy the configuration file **"storage.s3db"** in the directory **".\Bin64"**
 
 -
 
