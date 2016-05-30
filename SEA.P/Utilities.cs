@@ -49,37 +49,6 @@ namespace SEA.P
 
             return errorMsg.ToString();
         }
-        public static byte[] CompressString( string value )
-        {
-            Byte[] byteArray = new byte[0];
-            if (!string.IsNullOrEmpty(value))
-            {
-                byteArray = Encoding.UTF8.GetBytes(value);
-                using (System.IO.MemoryStream stream = new System.IO.MemoryStream())
-                {
-                    using (System.IO.Compression.GZipStream zip = new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionMode.Compress))
-                    {
-                        zip.Write(byteArray, 0, byteArray.Length);
-                    }
-                    byteArray = stream.ToArray();
-                }
-            }
-            return byteArray;
-        }
-        public static string DecompressString( byte[] value )
-        {
-            string resultString = string.Empty;
-            if (value != null && value.Length > 0)
-            {
-                using (System.IO.MemoryStream stream = new System.IO.MemoryStream(value))
-                using (System.IO.Compression.GZipStream zip = new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionMode.Decompress))
-                using (System.IO.StreamReader reader = new System.IO.StreamReader(zip))
-                {
-                    resultString = reader.ReadToEnd();
-                }
-            }
-            return resultString;
-        }
 
         public class AlphanumComparator<T> : System.Collections.Generic.IComparer<T>
         {

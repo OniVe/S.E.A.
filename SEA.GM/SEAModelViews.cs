@@ -1,6 +1,6 @@
 ﻿using VRage.Game.ModAPI;
 
-namespace SEA.ModelViews
+namespace SEA.GM.ModelViews
 {
     public enum BlockSize : int
     {

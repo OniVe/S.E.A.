@@ -1,5 +1,5 @@
 ﻿using Sandbox.ModAPI;
-using SEA.Context;
+using SEA.GM.Context;
 using VRage.Game.Components;
 
 namespace SEA.GM

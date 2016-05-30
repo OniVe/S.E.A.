@@ -1,7 +1,7 @@
 ﻿using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
-using SEA.ModelViews;
+using SEA.GM.ModelViews;
 using System;
 using System.Collections;
 using System.Collections.Generic;
