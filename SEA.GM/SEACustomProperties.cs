@@ -17,7 +17,7 @@ namespace SEA.GM
         }
     }
 
-    internal struct DeltaLimitSwitch<T> where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
+    public struct DeltaLimitSwitch<T> where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
 
@@ -38,6 +38,7 @@ namespace SEA.GM
             {
                 if (!block.Enabled || !block.IsWorking)
                     enabled = false;
+
                 return enabled;
             }
             set { enabled = value; }

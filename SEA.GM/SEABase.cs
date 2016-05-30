@@ -19,6 +19,7 @@ namespace SEA.GM
                 return;
             }
 
+            SEACustomProperties.Init();
             Context = new SEAContext(out allowUpdate);
             SEAUtilities.Logging.Static.WriteLine("Initialized");
         }
