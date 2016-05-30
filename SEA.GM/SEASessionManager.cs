@@ -390,8 +390,8 @@ namespace SEA.Managers
                 return null;
             else
                 return GetVirtualValueFloat(blocks[0].EntityId, propertyId);
-        }
 
+        }
 
         #region VirtualTerminalPropertis
 
