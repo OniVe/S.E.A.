@@ -5,7 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 
-namespace SEA
+namespace SEA.GM
 {
     public static partial class StringBuilderExtensions
     {

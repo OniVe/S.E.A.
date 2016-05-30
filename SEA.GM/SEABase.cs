@@ -2,7 +2,7 @@
 using SEA.Context;
 using VRage.Game.Components;
 
-namespace SEA
+namespace SEA.GM
 {
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
     public class SEABase : MySessionComponentBase
@@ -19,6 +19,7 @@ namespace SEA
                 return;
             }
 
+            SEACustomProperties.Init();
             Context = new SEAContext(out allowUpdate);
             SEAUtilities.Logging.Static.WriteLine("Initialized");
         }
@@ -27,8 +28,8 @@ namespace SEA
             if (!initialized && MyAPIGateway.Session != null)
                 Initialize();
 
-            if (allowUpdate)
-                MyAPIGateway.Utilities.InvokeOnGameThread(Context.UpdateAfterSimulationCallback);
+            //if (allowUpdate)
+            //    MyAPIGateway.Utilities.InvokeOnGameThread(Context.UpdateAfterSimulationCallback);
 
             base.UpdateAfterSimulation();
         }

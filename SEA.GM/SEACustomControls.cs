@@ -5,14 +5,15 @@ using System;
 using VRage.Game.Components;
 using VRage.ObjectBuilders;
 
-
-namespace SEA.GM.Controls
+namespace SEA.GM
 {
-    public static class SEACustomControls
+    public static class SEACustomProperties
     {
         public static void Init()
         {
             MotorStatorAngleProperty.InitControl();
+            MotorAdvancedStatorAngleProperty.InitControl();
+            PistonBasePositionProperty.InitControl();
         }
     }
 
@@ -25,12 +26,11 @@ namespace SEA.GM.Controls
         private float maxVelociy;
 
         private T block;
-        private float value;
+        private float limit;
         private Func<T, float> propertyGetter;
-        private Func<T, float> deltaValueGetter;
+        private Func<T, float> deltaLimitGetter;
         private string propertyId;
         private DateTime timeStamp;
-        private float deltaValue;
 
         public bool Enabled
         {
@@ -43,7 +43,8 @@ namespace SEA.GM.Controls
             set { enabled = value; }
         }
 
-        public float Value { get { return value; } set { this.value = value; timeStamp = DateTime.UtcNow; enabled = true; } }
+        public float Value { get { return propertyGetter(block); } }
+        public float Limit { get { return limit; } set { this.limit = value; timeStamp = DateTime.UtcNow; enabled = true; } }
 
         public DeltaLimitSwitch(VRage.ModAPI.IMyEntity block, float deltaLimit, float maxVelociy, string propertyId, Func<T, float> propertyGetter, Func<T, float> deltaValueGetter)
         {
@@ -53,25 +54,24 @@ namespace SEA.GM.Controls
             this.maxVelociy = maxVelociy;
             this.propertyId = propertyId;
             this.propertyGetter = propertyGetter;
-            this.deltaValueGetter = deltaValueGetter;
+            this.deltaLimitGetter = deltaValueGetter;
 
-            value = 0;
-            deltaValue = 0;
+            limit = 0;
             enabled = false;
             timeStamp = DateTime.UtcNow;
         }
 
         public void Update()
         {
-            deltaValue = deltaValueGetter(block);
+            var _deltaLimit = deltaLimitGetter(block);
 
-            if (((deltaValue < 0f ? -deltaValue : deltaValue) <= deltaLimit) || (DateTime.UtcNow.Subtract(timeStamp) > TIMEOUT))
+            if (((_deltaLimit < 0f ? -_deltaLimit : _deltaLimit) <= deltaLimit) || (DateTime.UtcNow.Subtract(timeStamp) > TIMEOUT))
             {
                 Enabled = false;
                 block.SetValue<float>(propertyId, 0f);
             }
-            else if ((deltaValue < 0f != propertyGetter(block) < 0f) || propertyGetter(block) == 0f)
-                block.SetValue<float>(propertyId, deltaValue < 0f ? -maxVelociy : maxVelociy);
+            else if ((_deltaLimit < 0f != Value < 0f) || Value == 0f)
+                block.SetValue<float>(propertyId, _deltaLimit < 0f ? -maxVelociy : maxVelociy);
         }
     }
 
@@ -84,7 +84,7 @@ namespace SEA.GM.Controls
         /// <summary>
         /// DeltaLimitSwitch
         /// </summary>
-        DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator> dls;
+        DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator> context;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
@@ -92,22 +92,22 @@ namespace SEA.GM.Controls
 
             _objectBuilder = objectBuilder;
 
-            dls = new DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator>(
+            context = new DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator>(
                 Entity,
                 (float)(Math.PI / 360f),
-                4,
+                4f,
                 "Velocity",
                 (block) => block.Angle,
                 (block) =>
                 {
                     if (float.IsInfinity(block.LowerLimit) && float.IsInfinity(block.UpperLimit))
-                        return MyMath.ShortestAngle(block.Angle, dls.Value);
+                        return MyMath.ShortestAngle(block.Angle, context.Limit);
                     else
                     {
-                        if (dls.Value < block.LowerLimit) dls.Value = block.LowerLimit;
-                        else if (dls.Value > block.UpperLimit) dls.Value = block.UpperLimit;
+                        if (context.Limit < block.LowerLimit) context.Limit = block.LowerLimit;
+                        else if (context.Limit > block.UpperLimit) context.Limit = block.UpperLimit;
 
-                        return dls.Value - block.Angle;
+                        return context.Limit - block.Angle;
                     }
                 });
 
@@ -116,29 +116,19 @@ namespace SEA.GM.Controls
 
         public override void UpdateAfterSimulation()
         {
-            if (!dls.Enabled)
-                return;
-
-            dls.Update();
+            context.Update();
 
             base.UpdateAfterSimulation();
         }
 
         public static void InitControl()
         {
-            var customProperty = MyAPIGateway.TerminalControls.CreateProperty<float, Sandbox.ModAPI.Ingame.IMyMotorStator>("CustomAngle");
-            customProperty.Getter = CustomPropertyGetter;
-            customProperty.Setter = CustomPropertySetter;
-            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyMotorStator>(customProperty);
-        }
+            var customProperty = MyAPIGateway.TerminalControls.CreateProperty<float, Sandbox.ModAPI.Ingame.IMyMotorStator>("Virtual Angle");
+            customProperty.SupportsMultipleBlocks = true;
+            customProperty.Getter = (block) => { return MyMath.RadiansToDegrees(block.GameLogic.GetAs<MotorStatorAngleProperty>().context.Value); };
+            customProperty.Setter = (block, value) => { block.GameLogic.GetAs<MotorStatorAngleProperty>().context.Limit = MyMath.DegreesToRadians(value); };
 
-        private static float CustomPropertyGetter(IMyTerminalBlock block)
-        {
-            return block.GetValue<float>("CustomAngle");
-        }
-        private static void CustomPropertySetter(IMyTerminalBlock block, float value)
-        {
-            block.GameLogic.GetAs<MotorStatorAngleProperty>().dls.Value = value;
+            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyMotorStator>(customProperty);
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false)
@@ -147,5 +137,122 @@ namespace SEA.GM.Controls
         }
     }
 
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorAdvancedStator))]
+    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
+    class MotorAdvancedStatorAngleProperty : MyGameLogicComponent
+    {
+        MyObjectBuilder_EntityBase _objectBuilder;
 
+        /// <summary>
+        /// DeltaLimitSwitch
+        /// </summary>
+        DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorAdvancedStator> context;
+
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
+        {
+            base.Init(objectBuilder);
+
+            _objectBuilder = objectBuilder;
+
+            context = new DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorAdvancedStator>(
+                Entity,
+                (float)(Math.PI / 360f),
+                4f,
+                "Velocity",
+                (block) => block.Angle,
+                (block) =>
+                {
+                    if (float.IsInfinity(block.LowerLimit) && float.IsInfinity(block.UpperLimit))
+                        return MyMath.ShortestAngle(block.Angle, context.Limit);
+                    else
+                    {
+                        if (context.Limit < block.LowerLimit) context.Limit = block.LowerLimit;
+                        else if (context.Limit > block.UpperLimit) context.Limit = block.UpperLimit;
+
+                        return context.Limit - block.Angle;
+                    }
+                });
+
+            NeedsUpdate = VRage.ModAPI.MyEntityUpdateEnum.EACH_FRAME;
+        }
+
+        public override void UpdateAfterSimulation()
+        {
+            context.Update();
+
+            base.UpdateAfterSimulation();
+        }
+
+        public static void InitControl()
+        {
+            var customProperty = MyAPIGateway.TerminalControls.CreateProperty<float, Sandbox.ModAPI.Ingame.IMyMotorAdvancedStator>("Virtual Angle");
+            customProperty.SupportsMultipleBlocks = true;
+            customProperty.Getter = (block) => { return MyMath.RadiansToDegrees(block.GameLogic.GetAs<MotorAdvancedStatorAngleProperty>().context.Value); };
+            customProperty.Setter = (block, value) => { block.GameLogic.GetAs<MotorAdvancedStatorAngleProperty>().context.Limit = MyMath.DegreesToRadians(value); };
+
+            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyMotorStator>(customProperty);
+        }
+
+        public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false)
+        {
+            return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder;
+        }
+    }
+
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_PistonBase))]
+    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
+    class PistonBasePositionProperty : MyGameLogicComponent
+    {
+        MyObjectBuilder_EntityBase _objectBuilder;
+
+        /// <summary>
+        /// DeltaLimitSwitch
+        /// </summary>
+        DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyPistonBase> context;
+
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
+        {
+            base.Init(objectBuilder);
+
+            _objectBuilder = objectBuilder;
+
+            context = new DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyPistonBase>(
+                Entity,
+                0.25f,
+                2f,
+                "Velocity",
+                (block) => block.CurrentPosition,
+                (block) =>
+                {
+                    if (context.Limit < block.MinLimit) context.Limit = block.MinLimit;
+                    else if (context.Limit > block.MaxLimit) context.Limit = block.MaxLimit;
+
+                    return context.Limit - block.CurrentPosition;
+                });
+
+            NeedsUpdate = VRage.ModAPI.MyEntityUpdateEnum.EACH_FRAME;
+        }
+
+        public override void UpdateAfterSimulation()
+        {
+            context.Update();
+
+            base.UpdateAfterSimulation();
+        }
+
+        public static void InitControl()
+        {
+            var customProperty = MyAPIGateway.TerminalControls.CreateProperty<float, Sandbox.ModAPI.Ingame.IMyMotorAdvancedStator>("Virtual Position");
+            customProperty.SupportsMultipleBlocks = true;
+            customProperty.Getter = (block) => { return block.GameLogic.GetAs<PistonBasePositionProperty>().context.Value; };
+            customProperty.Setter = (block, value) => { block.GameLogic.GetAs<PistonBasePositionProperty>().context.Limit = value; };
+
+            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyMotorStator>(customProperty);
+        }
+
+        public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false)
+        {
+            return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder;
+        }
+    }
 }

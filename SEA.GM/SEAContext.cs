@@ -1,18 +1,16 @@
 ﻿using Sandbox.ModAPI;
-using SEA.Managers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SEA.GM.Managers;
 
-namespace SEA.Context
+namespace SEA.GM.Context
 {
     public class SEAContext
     {
-        public Action UpdateAfterSimulationCallback;
-
-        private delegate object Algorithm( object value );
+        private delegate object Algorithm(object value);
         private bool sea_p_online = false;
         private System.Timers.Timer connectionToServerTimeoutTimer;
         private Func<uint, string, string> internalDoHandler;
@@ -20,10 +18,9 @@ namespace SEA.Context
         private Dictionary<uint, Algorithm> algorithms;
         private SEASessionManager sessionManager;
 
-        public SEAContext( out bool success )
+        public SEAContext(out bool success)
         {
             sessionManager = new SEASessionManager();
-            UpdateAfterSimulationCallback = new Action(sessionManager.UpdateAfterSimulation);
 
             #region Algorithms
 
@@ -59,10 +56,13 @@ namespace SEA.Context
             success = true;
         }
 
-        private void ConnectionToServerTimeout( object sender, System.Timers.ElapsedEventArgs e )
+        private void ConnectionToServerTimeout(object sender, System.Timers.ElapsedEventArgs e)
         {
             if (!sea_p_online)
+            {
+                SEAUtilities.Logging.Static.WriteLine("SEA Timeout connection to the plugin-server");
                 this.Close();
+            }
         }
 
         public void Close()
@@ -73,7 +73,7 @@ namespace SEA.Context
             SEAUtilities.Logging.Static.WriteLine("SEA Listening Stop");
         }
 
-        private object __serverCommand( object value )
+        private object __serverCommand(object value)
         {
             if (value is string)
                 switch ((string)value)
@@ -91,14 +91,14 @@ namespace SEA.Context
                 return null;
         }
 
-        public void DoOut( uint id, string value )
+        public void DoOut(uint id, string value)
         {
             if (sea_p_online)
                 externalDoHandler(id, value);
         }
 
         /* ! Runs in the main thread ! */
-        private string DoIn( uint id, string value )
+        private string DoIn(uint id, string value)
         {
             if (MyAPIGateway.Session != null && MyAPIGateway.Session.Player != null && algorithms.ContainsKey(id))
                 try
@@ -127,7 +127,7 @@ namespace SEA.Context
 
             return null;
         }
-        private static bool TryParseEntityId( object eId, out EntityKey entityKey )
+        private static bool TryParseEntityId(object eId, out EntityKey entityKey)
         {
             entityKey = new EntityKey();
             if (eId is string)
@@ -145,7 +145,7 @@ namespace SEA.Context
             return false;
         }
 
-        private object SetValueBool( object value )
+        private object SetValueBool(object value)
         {
             if (value is Hashtable)
             {
@@ -163,7 +163,7 @@ namespace SEA.Context
             }
             return false;
         }
-        private object SetValueFloat( object value )
+        private object SetValueFloat(object value)
         {
             if (value is Hashtable)
             {
@@ -174,18 +174,14 @@ namespace SEA.Context
                     _value.ContainsKey("value") &&
                     TryParseEntityId(_value["eId"], out entityKey))
                 {
-                    return ((string)_value["propId"]).StartsWith("Virtual") ?
-                        (entityKey.IsGroup ?
-                            sessionManager.SetVirtualValueFloat(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"], (float)_value["value"]) :
-                            sessionManager.SetVirtualValueFloat(entityKey.EntityId, (string)_value["propId"], (float)_value["value"])) :
-                        (entityKey.IsGroup ?
-                            sessionManager.SetValueFloat(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"], (float)_value["value"]) :
-                            sessionManager.SetValueFloat(entityKey.EntityId, (string)_value["propId"], (float)_value["value"]));
+                    return entityKey.IsGroup ?
+                        sessionManager.SetValueFloat(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"], (float)_value["value"]) :
+                        sessionManager.SetValueFloat(entityKey.EntityId, (string)_value["propId"], (float)_value["value"]);
                 }
             }
             return false;
         }
-        private object SetBlockAction( object value )
+        private object SetBlockAction(object value)
         {
             if (value is Hashtable)
             {
@@ -203,7 +199,7 @@ namespace SEA.Context
             return false;
         }
 
-        private object GetCubeGrids( object value )
+        private object GetCubeGrids(object value)
         {
             return new ArrayList(sessionManager
                 .GetAvalibleCubeGrids()
@@ -215,7 +211,7 @@ namespace SEA.Context
                     { "type", i.size.ToString("g") }
                 }).ToArray());
         }
-        private object GetAvalibleBlocks( object value )
+        private object GetAvalibleBlocks(object value)
         {
             EntityKey entityKey;
             if (!TryParseEntityId(value, out entityKey) || entityKey.IsGroup)
@@ -232,7 +228,7 @@ namespace SEA.Context
                 }).ToArray());
         }
 
-        private object GetBlockPropertiesByTypeName( object value, PropertyType propertyType )
+        private object GetBlockPropertiesByTypeName(object value, PropertyType propertyType)
         {
             EntityKey entityKey;
             if (!TryParseEntityId(value, out entityKey))
@@ -247,19 +243,19 @@ namespace SEA.Context
                     { "type", item.TypeName}
                 }).ToArray());
         }
-        private object GetBlockProperties( object value )
+        private object GetBlockProperties(object value)
         {
             return GetBlockPropertiesByTypeName(value, PropertyType.All);
         }
-        private object GetBlockPropertiesBool( object value )
+        private object GetBlockPropertiesBool(object value)
         {
             return GetBlockPropertiesByTypeName(value, PropertyType.Boolean);
         }
-        private object GetBlockPropertiesFloat( object value )
+        private object GetBlockPropertiesFloat(object value)
         {
             return GetBlockPropertiesByTypeName(value, PropertyType.Single);
         }
-        private object GetBlockActons( object value )
+        private object GetBlockActons(object value)
         {
             EntityKey entityKey;
             if (!TryParseEntityId(value, out entityKey))
@@ -274,7 +270,7 @@ namespace SEA.Context
                 }).ToArray());
         }
 
-        private object GetValueBool( object value )
+        private object GetValueBool(object value)
         {
             if (value is Hashtable)
             {
@@ -291,7 +287,7 @@ namespace SEA.Context
             }
             return null;
         }
-        private object GetValueFloat( object value )
+        private object GetValueFloat(object value)
         {
             if (value is Hashtable)
             {
@@ -301,19 +297,15 @@ namespace SEA.Context
                     _value.ContainsKey("propId") &&
                     TryParseEntityId(_value["eId"], out entityKey))
                 {
-                    return ((string)_value["propId"]).StartsWith("Virtual") ?
-                        (entityKey.IsGroup ?
-                            sessionManager.GetVirtualValueFloat(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"]) :
-                            sessionManager.GetVirtualValueFloat(entityKey.EntityId, (string)_value["propId"])) :
-                        (entityKey.IsGroup ?
-                            sessionManager.GetValueFloat(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"]) :
-                            sessionManager.GetValueFloat(entityKey.EntityId, (string)_value["propId"]));
+                    return entityKey.IsGroup ?
+                        sessionManager.GetValueFloat(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"]) :
+                        sessionManager.GetValueFloat(entityKey.EntityId, (string)_value["propId"]);
                 }
             }
             return null;
         }
 
-        private object GetGroupBlocks( object value )
+        private object GetGroupBlocks(object value)
         {
             EntityKey entityKey;
             if (!TryParseEntityId(value, out entityKey) || !entityKey.IsGroup)
