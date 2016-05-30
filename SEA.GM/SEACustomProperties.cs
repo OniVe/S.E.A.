@@ -17,7 +17,7 @@ namespace SEA.GM
         }
     }
 
-    struct DeltaLimitSwitch<T> where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
+    internal struct DeltaLimitSwitch<T> where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
 
@@ -63,6 +63,9 @@ namespace SEA.GM
 
         public void Update()
         {
+            if (!Enabled)
+                return;
+
             var _deltaLimit = deltaLimitGetter(block);
 
             if (((_deltaLimit < 0f ? -_deltaLimit : _deltaLimit) <= deltaLimit) || (DateTime.UtcNow.Subtract(timeStamp) > TIMEOUT))
@@ -77,13 +80,10 @@ namespace SEA.GM
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorStator))]
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
-    class MotorStatorAngleProperty : MyGameLogicComponent
+    public class MotorStatorAngleProperty : MyGameLogicComponent
     {
         MyObjectBuilder_EntityBase _objectBuilder;
 
-        /// <summary>
-        /// DeltaLimitSwitch
-        /// </summary>
         DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator> context;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
@@ -139,13 +139,10 @@ namespace SEA.GM
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorAdvancedStator))]
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
-    class MotorAdvancedStatorAngleProperty : MyGameLogicComponent
+    public class MotorAdvancedStatorAngleProperty : MyGameLogicComponent
     {
         MyObjectBuilder_EntityBase _objectBuilder;
 
-        /// <summary>
-        /// DeltaLimitSwitch
-        /// </summary>
         DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorAdvancedStator> context;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
@@ -201,13 +198,10 @@ namespace SEA.GM
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_PistonBase))]
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
-    class PistonBasePositionProperty : MyGameLogicComponent
+    public class PistonBasePositionProperty : MyGameLogicComponent
     {
         MyObjectBuilder_EntityBase _objectBuilder;
 
-        /// <summary>
-        /// DeltaLimitSwitch
-        /// </summary>
         DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyPistonBase> context;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)

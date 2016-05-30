@@ -20,6 +20,8 @@ namespace SEA.GM.Context
 
         public SEAContext(out bool success)
         {
+            SEACustomProperties.Init();
+
             sessionManager = new SEASessionManager();
 
             #region Algorithms
