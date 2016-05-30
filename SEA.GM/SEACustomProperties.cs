@@ -46,7 +46,7 @@ namespace SEA.GM
         public float Value { get { return propertyGetter(block); } }
         public float Limit { get { return limit; } set { this.limit = value; timeStamp = DateTime.UtcNow; enabled = true; } }
 
-        public DeltaLimitSwitch(VRage.ModAPI.IMyEntity block, float deltaLimit, float maxVelociy, string propertyId, Func<T, float> propertyGetter, Func<T, float> deltaValueGetter)
+        public DeltaLimitSwitch(VRage.ModAPI.IMyEntity block, float deltaLimit, float maxVelociy, string propertyId, Func<T, float> propertyGetter, Func<T, float> deltaLimitGetter)
         {
             this.block = block as T;
 
@@ -54,7 +54,7 @@ namespace SEA.GM
             this.maxVelociy = maxVelociy;
             this.propertyId = propertyId;
             this.propertyGetter = propertyGetter;
-            this.deltaLimitGetter = deltaValueGetter;
+            this.deltaLimitGetter = deltaLimitGetter;
 
             limit = 0;
             enabled = false;
@@ -190,7 +190,7 @@ namespace SEA.GM
             customProperty.Getter = (block) => { return MyMath.RadiansToDegrees(block.GameLogic.GetAs<MotorAdvancedStatorAngleProperty>().context.Value); };
             customProperty.Setter = (block, value) => { block.GameLogic.GetAs<MotorAdvancedStatorAngleProperty>().context.Limit = MyMath.DegreesToRadians(value); };
 
-            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyMotorStator>(customProperty);
+            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyMotorAdvancedStator>(customProperty);
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false)
@@ -242,12 +242,12 @@ namespace SEA.GM
 
         public static void InitControl()
         {
-            var customProperty = MyAPIGateway.TerminalControls.CreateProperty<float, Sandbox.ModAPI.Ingame.IMyMotorAdvancedStator>("Virtual Position");
+            var customProperty = MyAPIGateway.TerminalControls.CreateProperty<float, Sandbox.ModAPI.Ingame.IMyPistonBase>("Virtual Position");
             customProperty.SupportsMultipleBlocks = true;
             customProperty.Getter = (block) => { return block.GameLogic.GetAs<PistonBasePositionProperty>().context.Value; };
             customProperty.Setter = (block, value) => { block.GameLogic.GetAs<PistonBasePositionProperty>().context.Limit = value; };
 
-            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyMotorStator>(customProperty);
+            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyPistonBase>(customProperty);
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false)
