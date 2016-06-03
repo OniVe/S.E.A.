@@ -11,13 +11,20 @@ namespace SEA.GM
     {
         public static void Init()
         {
-            MotorStatorAngleProperty.InitControl();
-            MotorAdvancedStatorAngleProperty.InitControl();
-            PistonBasePositionProperty.InitControl();
+            try
+            {
+                MotorStatorAngleProperty.InitControl();
+                //MotorAdvancedStatorAngleProperty.InitControl();
+                //PistonBasePositionProperty.InitControl();
+            }
+            catch(Exception ex)
+            {
+                SEAUtilities.Logging.Static.WriteLine(SEAUtilities.GetExceptionString(ex));
+            }
         }
     }
 
-    public struct DeltaLimitSwitch<T> where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
+    public class DeltaLimitSwitch<T> where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
 
@@ -32,6 +39,7 @@ namespace SEA.GM
         private string propertyId;
         private DateTime timeStamp;
 
+        public bool IsInit { get; private set; }
         public bool Enabled
         {
             get
@@ -60,6 +68,8 @@ namespace SEA.GM
             limit = 0;
             enabled = false;
             timeStamp = DateTime.UtcNow;
+
+            IsInit = true;
         }
 
         public void Update()
@@ -80,7 +90,6 @@ namespace SEA.GM
     }
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorStator))]
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
     public class MotorStatorAngleProperty : MyGameLogicComponent
     {
         MyObjectBuilder_EntityBase _objectBuilder;
@@ -117,7 +126,8 @@ namespace SEA.GM
 
         public override void UpdateAfterSimulation()
         {
-            context.Update();
+            if (context != null)
+                context.Update();
 
             base.UpdateAfterSimulation();
         }
@@ -138,9 +148,10 @@ namespace SEA.GM
         }
     }
 
+    /*
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorAdvancedStator))]
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
-    public class MotorAdvancedStatorAngleProperty : MyGameLogicComponent
+    class MotorAdvancedStatorAngleProperty : MyGameLogicComponent
     {
         MyObjectBuilder_EntityBase _objectBuilder;
 
@@ -148,8 +159,6 @@ namespace SEA.GM
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            base.Init(objectBuilder);
-
             _objectBuilder = objectBuilder;
 
             context = new DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorAdvancedStator>(
@@ -172,6 +181,8 @@ namespace SEA.GM
                 });
 
             NeedsUpdate = VRage.ModAPI.MyEntityUpdateEnum.EACH_FRAME;
+
+            base.Init(objectBuilder);
         }
 
         public override void UpdateAfterSimulation()
@@ -199,7 +210,7 @@ namespace SEA.GM
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_PistonBase))]
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
-    public class PistonBasePositionProperty : MyGameLogicComponent
+    class PistonBasePositionProperty : MyGameLogicComponent
     {
         MyObjectBuilder_EntityBase _objectBuilder;
 
@@ -207,8 +218,6 @@ namespace SEA.GM
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            base.Init(objectBuilder);
-
             _objectBuilder = objectBuilder;
 
             context = new DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyPistonBase>(
@@ -226,6 +235,8 @@ namespace SEA.GM
                 });
 
             NeedsUpdate = VRage.ModAPI.MyEntityUpdateEnum.EACH_FRAME;
+
+            base.Init(objectBuilder);
         }
 
         public override void UpdateAfterSimulation()
@@ -249,5 +260,5 @@ namespace SEA.GM
         {
             return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder;
         }
-    }
+    }*/
 }
