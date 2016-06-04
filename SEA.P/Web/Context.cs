@@ -84,7 +84,7 @@ namespace SEA.P.Web
             {
                 try
                 {
-                    var list =  await db.Table<World>().ToListAsync();
+                    var list = await db.Table<World>().ToListAsync();
                     return list.OrderBy(x => x.Title, Utilities.NaturalNumericComparer).ToList();
                 }
                 catch
@@ -92,7 +92,7 @@ namespace SEA.P.Web
                     return null;
                 }
             }
-            public async Task<World> GetAsync( int id )
+            public async Task<World> GetAsync(int id)
             {
                 if (id > 0)
                     try
@@ -103,7 +103,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<List<World>> GetWhereAsync( long extId )
+            public async Task<List<World>> GetWhereAsync(long extId)
             {
                 if (extId > 0)
                     try
@@ -115,7 +115,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<int> AddAsync( World world )
+            public async Task<int> AddAsync(World world)
             {
                 if (world != null && world.isNew && world.isValid)
                     using (await _lockModify.LockAsync())
@@ -132,7 +132,7 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;//Error
             }
-            public async Task<List<World>> AddAsync( List<World> worldList )
+            public async Task<List<World>> AddAsync(List<World> worldList)
             {
                 if (worldList != null && worldList.Count > 0 && worldList.All(x => x.isNew && x.isValid))
                     using (await _lockModify.LockAsync())
@@ -154,7 +154,7 @@ namespace SEA.P.Web
 
                 return null;//Error
             }
-            public async Task<int> UpdateAsync( World world )
+            public async Task<int> UpdateAsync(World world)
             {
                 if (world != null && !world.isNew && world.isValid)
                     using (await _lockModify.LockAsync())
@@ -174,7 +174,7 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;
             }
-            public async Task<int> DeleteAsync( int id )
+            public async Task<int> DeleteAsync(int id)
             {
                 if (id > 0)
                     using (await _lockCascadeDelete.LockAsync())
@@ -204,7 +204,7 @@ namespace SEA.P.Web
         {
             private readonly AsyncLock _lockModify = new AsyncLock();
 
-            public async Task<List<Grid>> GetAllAsync( int pId )
+            public async Task<List<Grid>> GetAllAsync(int pId)
             {
                 if (pId > 0)
                     try
@@ -216,7 +216,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<Grid> GetAsync( int id )
+            public async Task<Grid> GetAsync(int id)
             {
                 if (id > 0)
                     try
@@ -227,7 +227,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<List<Grid>> GetWhereAsync( int pId, long extId )
+            public async Task<List<Grid>> GetWhereAsync(int pId, long extId)
             {
                 if (extId > 0)
                     try
@@ -241,7 +241,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<int> AddAsync( Grid grid )
+            public async Task<int> AddAsync(Grid grid)
             {
                 if (grid != null && grid.isNew && grid.isValid)
                     using (await _lockModify.LockAsync())
@@ -258,7 +258,7 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;//Error
             }
-            public async Task<List<Grid>> AddAsync( List<Grid> gridList )
+            public async Task<List<Grid>> AddAsync(List<Grid> gridList)
             {
                 if (gridList != null && gridList.Count > 0 && gridList.All(x => x.isNew && x.isValid))
                     using (await _lockModify.LockAsync())
@@ -283,7 +283,7 @@ namespace SEA.P.Web
 
                 return null;//Error
             }
-            public async Task<int> UpdateAsync( Grid grid )
+            public async Task<int> UpdateAsync(Grid grid)
             {
                 if (grid != null && !grid.isNew && grid.isValid)
                     using (await _lockModify.LockAsync())
@@ -303,7 +303,7 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;
             }
-            public async Task<int> DeleteAsync( int id )
+            public async Task<int> DeleteAsync(int id)
             {
                 if (id > 0)
                     using (await _lockCascadeDelete.LockAsync())
@@ -333,7 +333,7 @@ namespace SEA.P.Web
         {
             private readonly AsyncLock _lockModify = new AsyncLock();
 
-            public async Task<List<Control>> GetAllAsync( int pId )
+            public async Task<List<Control>> GetAllAsync(int pId)
             {
                 if (pId > 0)
                     try
@@ -344,7 +344,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<Control> GetAsync( int id )
+            public async Task<Control> GetAsync(int id)
             {
                 if (id > 0)
                     try
@@ -355,7 +355,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<List<Control>> GetWhereAsync( int pId, string extId )
+            public async Task<List<Control>> GetWhereAsync(int pId, string extId)
             {
                 if (!string.IsNullOrWhiteSpace(extId))
                     try
@@ -369,7 +369,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<int> AddAsync( Control control )
+            public async Task<int> AddAsync(Control control)
             {
                 if (control != null && control.isNew && control.isValid)
                     using (await _lockModify.LockAsync())
@@ -386,7 +386,7 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;//Error
             }
-            public async Task<List<Control>> AddAsync( List<Control> controlList )
+            public async Task<List<Control>> AddAsync(List<Control> controlList)
             {
                 if (controlList != null && controlList.Count > 0 && controlList.All(x => x.isNew && x.isValid))
                     using (await _lockModify.LockAsync())
@@ -411,7 +411,7 @@ namespace SEA.P.Web
 
                 return null;//Error
             }
-            public async Task<int> UpdateAsync( Control control )
+            public async Task<int> UpdateAsync(Control control)
             {
                 if (control != null && !control.isNew && control.isValid)
                     using (await _lockModify.LockAsync())
@@ -431,7 +431,7 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;
             }
-            public async Task<int> DeleteAsync( int id )
+            public async Task<int> DeleteAsync(int id)
             {
                 if (id > 0)
                     using (await _lockCascadeDelete.LockAsync())
@@ -465,7 +465,7 @@ namespace SEA.P.Web
             {
                 public string Key { get; set; }
             }
-            public async Task<List<string>> KeysAsync( int pId )
+            public async Task<List<string>> KeysAsync(int pId)
             {
                 if (pId > 0)
                     try
@@ -477,13 +477,13 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<int> SaveAsync( ControlSettings controlSettings )
+            public async Task<int> SaveAsync(ControlSettings controlSettings)
             {
                 if (controlSettings != null && controlSettings.isValid)
                     using (await _lockModify.LockAsync())
                         try
                         {
-                            var _controlSettings = await db.Table<ControlSettings>().Where( x => x.ControlId == controlSettings.ControlId && x.Key == controlSettings.Key).FirstOrDefaultAsync();
+                            var _controlSettings = await db.Table<ControlSettings>().Where(x => x.ControlId == controlSettings.ControlId && x.Key == controlSettings.Key).FirstOrDefaultAsync();
                             if (_controlSettings == null)
                                 return await db.InsertAsync(controlSettings) > 0 ? controlSettings.Id : (int)ErrorCode.InternalError;
                             else
@@ -498,12 +498,12 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;//Error
             }
-            public async Task<string> LoadAsync( int pId, string key )
+            public async Task<string> LoadAsync(int pId, string key)
             {
                 if (pId > 0 && !string.IsNullOrWhiteSpace(key))
                     try
                     {
-                        var controlSettings = await db.Table<ControlSettings>().Where( x => x.ControlId == pId && x.Key == key).FirstOrDefaultAsync();
+                        var controlSettings = await db.Table<ControlSettings>().Where(x => x.ControlId == pId && x.Key == key).FirstOrDefaultAsync();
                         if (controlSettings != null)
                             return controlSettings.Value;
                     }
@@ -511,7 +511,7 @@ namespace SEA.P.Web
 
                 return null;//Error
             }
-            public async Task<int> DeleteAsync( int pId, string key )
+            public async Task<int> DeleteAsync(int pId, string key)
             {
                 if (pId > 0 && !string.IsNullOrWhiteSpace(key))
                     using (await _lockCascadeDelete.LockAsync())
@@ -559,7 +559,7 @@ namespace SEA.P.Web
 
                 return null;
             }
-            public async Task<int> SaveAsync( string id, string value )
+            public async Task<int> SaveAsync(string id, string value)
             {
                 if (id != null && !string.IsNullOrWhiteSpace(id))
                     using (await _lockModify.LockAsync())
@@ -573,7 +573,7 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;//Error
             }
-            public async Task<int> SaveAsync( UserData userData )
+            public async Task<int> SaveAsync(UserData userData)
             {
                 if (userData != null && userData.isValid)
                     using (await _lockModify.LockAsync())
@@ -587,7 +587,7 @@ namespace SEA.P.Web
 
                 return (int)ErrorCode.InternalError;//Error
             }
-            public async Task<string> LoadAsync( string id )
+            public async Task<string> LoadAsync(string id)
             {
                 if (!string.IsNullOrWhiteSpace(id))
                     try
@@ -600,7 +600,7 @@ namespace SEA.P.Web
 
                 return null;//Error
             }
-            public async Task<int> DeleteAsync( string id )
+            public async Task<int> DeleteAsync(string id)
             {
                 if (string.IsNullOrWhiteSpace(id))
                     return (int)ErrorCode.Invalid;
@@ -623,7 +623,7 @@ namespace SEA.P.Web
     public class HUBContext : IDisposable
     {
         private IHubContext seaHubContext;
-        private TimeSpan executeTimeout= TimeSpan.FromSeconds(2);
+        private TimeSpan executeTimeout = TimeSpan.FromSeconds(2);
         private System.Timers.Timer reconnectionTimer;
         private bool disposed = false;
         private bool sea_gm_online = false;
@@ -684,12 +684,22 @@ namespace SEA.P.Web
             }
         }
 
-        private void DoIn( uint id, string value )
+        private void DoIn(uint id, string value)
         {
+            if (id == 0)
+                switch (value)
+                {
+                    case "\"disconnect\"":
+
+                        sea_gm_online = false;
+                        reconnectionTimer.Enabled = true;
+                        break;
+                }
+
             seaHubContext.Clients.All.doAsync(id, value);
         }
 
-        public string DoOut( Command command, out ExecuteCode executeCode )
+        public string DoOut(Command command, out ExecuteCode executeCode)
         {
             if (!sea_gm_online || !MyAPIUtilities.Static.Variables.ContainsKey("SEA.GM-Init"))
             {
@@ -715,7 +725,7 @@ namespace SEA.P.Web
             return result;
         }
 
-        private void Reconnecting( object sender, System.Timers.ElapsedEventArgs e )
+        private void Reconnecting(object sender, System.Timers.ElapsedEventArgs e)
         {
             if (ConnectToGameSession() == GameSessionStatus.Online)
             {

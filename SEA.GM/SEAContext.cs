@@ -69,7 +69,7 @@ namespace SEA.GM.Context
         {
             MyAPIUtilities.Static.Variables.Remove("SEA.GM-Init");
             MyAPIUtilities.Static.Variables.Remove("SEA.GM-DoHandler");
-            DoOut(0, "disconnect");// Notify the clients about disconnecting
+            DoOut(0, "\"disconnect\"");// Notify the clients about disconnecting
             SEAUtilities.Logging.Static.WriteLine("SEA Listening Stop");
         }
 
