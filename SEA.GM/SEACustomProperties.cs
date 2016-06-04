@@ -14,8 +14,13 @@ namespace SEA.GM
         {
             try
             {
-                MotorStatorAngleProperty.InitControls();
-                PistonBasePositionProperty.InitControls();
+                MotorStatorAngleProperty.AddControlProperty<MotorStatorAngleProperty>("Virtual Angle",
+                    (context) => MyMath.RadiansToDegrees(context.Value),
+                    (context, value) => context.Value = MyMath.DegreesToRadians(value));
+
+                PistonBasePositionProperty.AddControlProperty<PistonBasePositionProperty>("Virtual Position",
+                    (context) => context.Value,
+                    (context, value) => context.Value = value);
             }
             catch (Exception ex)
             {
@@ -24,7 +29,7 @@ namespace SEA.GM
         }
     }
 
-    public abstract class CustomProperty<T> : MyGameLogicComponent where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
+    public abstract class LimitProperty<T> : MyGameLogicComponent where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
     {
         internal bool isInit = false;
         internal MyObjectBuilder_EntityBase _objectBuilder;
@@ -54,7 +59,7 @@ namespace SEA.GM
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
 
-        public static void AddControlProperty<U>(string id, Func<DeltaLimitSwitch<T>, float> getter, Action<DeltaLimitSwitch<T>, float> setter) where U : CustomProperty<T>
+        public static void AddControlProperty<U>(string id, Func<DeltaLimitSwitch<T>, float> getter, Action<DeltaLimitSwitch<T>, float> setter) where U : LimitProperty<T>
         {
             var property = MyAPIGateway.TerminalControls.CreateProperty<float, T>(id);
             property.SupportsMultipleBlocks = false;
@@ -142,12 +147,12 @@ namespace SEA.GM
     }
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorStator))]
-    public class MotorStatorAngleProperty : CustomProperty<Sandbox.ModAPI.Ingame.IMyMotorStator>
+    public class MotorStatorAngleProperty : LimitProperty<Sandbox.ModAPI.Ingame.IMyMotorStator>
     {
         public override bool Init()
         {
             return context.Init(
-                (float)(Math.PI / 360f),
+                (float)(Math.PI / 360f), // Δ 1.0 degress
                 4f,
                 "Velocity",
                 (block) => block.Angle,
@@ -164,27 +169,18 @@ namespace SEA.GM
                     }
                 });
         }
-
-        public static void InitControls()
-        {
-            AddControlProperty<MotorStatorAngleProperty>(
-                "Virtual Angle",
-                (context) => { return MyMath.RadiansToDegrees(context.Value); },
-                (context, value) => { context.Value = MyMath.DegreesToRadians(value); });
-        }
     }
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorAdvancedStator))]
     public class MotorAdvancedStatorAngleProperty : MotorStatorAngleProperty { }
 
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_PistonBase))]
-    public class PistonBasePositionProperty : CustomProperty<Sandbox.ModAPI.Ingame.IMyPistonBase>
+    public class PistonBasePositionProperty : LimitProperty<Sandbox.ModAPI.Ingame.IMyPistonBase>
     {
         public override bool Init()
         {
-            SEAUtilities.Logging.Static.WriteLine(Entity.GetType().ToString());
             return context.Init(
-                0.25f,
+                0.1f, // Δ 0.2 meters
                 2f,
                 "Velocity",
                 (block) => block.CurrentPosition,
@@ -196,13 +192,9 @@ namespace SEA.GM
                     return context.Limit - block.CurrentPosition;
                 });
         }
-
-        public static void InitControls()
-        {
-            AddControlProperty<PistonBasePositionProperty>(
-                "Virtual Position",
-                (context) => { return context.Value; },
-                (context, value) => { context.Value = value; });
-        }
     }
+
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_ExtendedPistonBase))]
+    public class ExtendedPistonBasePositionProperty : PistonBasePositionProperty { }
+
 }
