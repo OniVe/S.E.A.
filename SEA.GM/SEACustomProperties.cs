@@ -32,12 +32,16 @@ namespace SEA.GM
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
+            base.Init(objectBuilder);
+
             _objectBuilder = objectBuilder;
+            if (Entity != null)
+            {
+                context = new DeltaLimitSwitch<T>(Entity);
+                isInit = this.Init();
 
-            context = new DeltaLimitSwitch<T>(Entity);
-            isInit = this.Init();
-
-            NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
+                NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
+            }
         }
 
         public abstract bool Init();
@@ -170,6 +174,9 @@ namespace SEA.GM
         }
     }
 
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorAdvancedStator))]
+    public class MotorAdvancedStatorAngleProperty : MotorStatorAngleProperty { }
+
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_PistonBase))]
     public class PistonBasePositionProperty : CustomProperty<Sandbox.ModAPI.Ingame.IMyPistonBase>
     {
@@ -189,7 +196,7 @@ namespace SEA.GM
                     return context.Limit - block.CurrentPosition;
                 });
         }
-        
+
         public static void InitControls()
         {
             AddControlProperty<PistonBasePositionProperty>(
