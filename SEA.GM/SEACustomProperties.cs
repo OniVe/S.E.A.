@@ -205,12 +205,13 @@ namespace SEA.GM
         private MyObjectBuilder_EntityBase _objectBuilder;
 
         private Sandbox.ModAPI.Ingame.IMyTerminalBlock block;
-        private Dictionary<string, float> propertisFloat;
-        private Dictionary<string, bool> propertisBool;
 
-        private float tempFloatValue;
-        private bool tempBoolValue;
-        private StringBuilder tempStringBuilder;
+        private Dictionary<string, float> propertisFloat = new Dictionary<string, float>();
+        private Dictionary<string, bool> propertisBool = new Dictionary<string, bool>();
+
+        private float tempFloatValue = 0;
+        private bool tempBoolValue = false;
+        private StringBuilder tempStringBuilder = new StringBuilder();
 
         private Action<uint, string> doOut;
 
@@ -254,7 +255,6 @@ namespace SEA.GM
             _objectBuilder = objectBuilder;
 
             block = Entity as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
-            tempStringBuilder = new StringBuilder();
 
             isInit = true;
 

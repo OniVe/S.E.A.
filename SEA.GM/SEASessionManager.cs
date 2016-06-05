@@ -331,6 +331,7 @@ namespace SEA.GM.Managers
                 SEAUtilities.Logging.Static.WriteLine("TrackBlockValue monitor is null");
                 monitor = new MonitorPropertyChanges(doOut);
                 block.GameLogic.Container.Add(monitor);
+                SEAUtilities.Logging.Static.WriteLine("TrackBlockValue try Init");
                 monitor.Init(block.GetObjectBuilder());
             }
 
