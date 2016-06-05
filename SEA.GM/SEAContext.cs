@@ -273,14 +273,17 @@ namespace SEA.GM.Context
 
         private object TrackBlockValue(object value)
         {
+            SEAUtilities.Logging.Static.WriteLine("TrackBlockValue Context");
             if (value is Hashtable)
             {
+                SEAUtilities.Logging.Static.WriteLine("TrackBlockValue is Hashtable");
                 var _value = (Hashtable)value;
                 EntityKey entityKey;
                 if (_value.ContainsKey("eId") &&
                     _value.ContainsKey("propId") &&
                     TryParseEntityId(_value["eId"], out entityKey))
                 {
+                    SEAUtilities.Logging.Static.WriteLine("TrackBlockValue valid");
                     return entityKey.IsGroup ?
                         false :
                         sessionManager.TrackBlockValue(entityKey.EntityId, (string)_value["propId"]);

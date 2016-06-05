@@ -216,6 +216,7 @@ namespace SEA.GM
 
         public bool Add(string propertyId)
         {
+            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges Add("+propertyId+")");
             //propertyId = propertyId.ToLower();
             var property = block.GetProperty(propertyId);
             if (property == null)
@@ -223,11 +224,13 @@ namespace SEA.GM
 
             if (property.Is<float>())
             {
+                SEAUtilities.Logging.Static.WriteLine("    MonitorPropertyChanges is float");
                 if (!propertisFloat.ContainsKey(propertyId))
                     propertisFloat.Add(propertyId, block.GetValue<float>(propertyId));
             }
             else if (property.Is<bool>())
             {
+                SEAUtilities.Logging.Static.WriteLine("    MonitorPropertyChanges is bool");
                 if (!propertisBool.ContainsKey(propertyId))
                     propertisBool.Add(propertyId, block.GetValue<bool>(propertyId));
             }
@@ -246,8 +249,8 @@ namespace SEA.GM
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
+            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges Init()");
             base.Init(objectBuilder);
-
             _objectBuilder = objectBuilder;
 
             block = Entity as Sandbox.ModAPI.Ingame.IMyTerminalBlock;

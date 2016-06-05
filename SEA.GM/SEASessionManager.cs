@@ -320,15 +320,18 @@ namespace SEA.GM.Managers
 
         public bool TrackBlockValue(long entityId, string propertyId)
         {
+            SEAUtilities.Logging.Static.WriteLine("TrackBlockValue(entityId:"+entityId.ToString()+", propertyId:"+propertyId+")");
             var block = GetTerminalBlock(entityId);
-            if (block != null)
+            if (block == null)
                 return false;
 
             var monitor = block.GameLogic.GetAs<MonitorPropertyChanges>();
             if (monitor == null)
             {
+                SEAUtilities.Logging.Static.WriteLine("TrackBlockValue monitor is null");
                 monitor = new MonitorPropertyChanges(doOut);
                 block.GameLogic.Container.Add(monitor);
+                monitor.Init(block.GetObjectBuilder());
             }
 
             return monitor.Add(propertyId);
