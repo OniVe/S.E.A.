@@ -8,6 +8,7 @@ using System.Text;
 using VRage.Game.Components;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
+using VRage.Game;
 
 namespace SEA.GM
 {
@@ -36,10 +37,13 @@ namespace SEA.GM
     {
         internal bool isInit = false;
         internal MyObjectBuilder_EntityBase _objectBuilder;
-        internal DeltaLimitSwitch<T> context;
+        internal DeltaLimitSwitch<T> context;//context should be changed to Dictionary (multiple Properties)
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
+            if (isInit)
+                return;
+
             base.Init(objectBuilder);
 
             _objectBuilder = objectBuilder;
@@ -47,7 +51,7 @@ namespace SEA.GM
             context = new DeltaLimitSwitch<T>(Entity);
             isInit = this.Init();
 
-            NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
+            NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
         }
 
         public abstract bool Init();
@@ -198,26 +202,30 @@ namespace SEA.GM
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_ExtendedPistonBase))]
     public class ExtendedPistonBasePositionProperty : PistonBasePositionProperty { }
 
-
-    public class MonitorPropertyChanges : MyGameLogicComponent
+    public class MonitorPropertyChanges : SEAGameLogicComponent
     {
-        private bool isInit = false;
-        private MyObjectBuilder_EntityBase _objectBuilder;
+        internal bool isInit = false;
+        internal MyObjectBuilder_EntityBase _objectBuilder;
 
-        private Sandbox.ModAPI.Ingame.IMyTerminalBlock block;
+        internal Sandbox.ModAPI.Ingame.IMyFunctionalBlock block;
 
-        private Dictionary<string, float> propertisFloat = new Dictionary<string, float>();
-        private Dictionary<string, bool> propertisBool = new Dictionary<string, bool>();
+        internal Dictionary<string, float> propertisFloat = new Dictionary<string, float>();
+        internal Dictionary<string, bool> propertisBool = new Dictionary<string, bool>();
 
-        private float tempFloatValue = 0;
-        private bool tempBoolValue = false;
-        private StringBuilder tempStringBuilder = new StringBuilder();
+        internal float tempFloatValue = 0;
+        internal bool tempBoolValue = false;
+        internal StringBuilder tempStringBuilder = new StringBuilder();
 
-        private Action<uint, string> doOut;
+        internal Action<uint, string> doOut;
 
-        public bool Add(string propertyId)
+        public MonitorPropertyChanges(Action<uint, string> doOut)
         {
-            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges Add("+propertyId+")");
+            this.doOut = doOut;
+        }
+
+        internal bool Add(string propertyId)
+        {
+            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges Add(" + propertyId + ")");
             //propertyId = propertyId.ToLower();
             var property = block.GetProperty(propertyId);
             if (property == null)
@@ -241,24 +249,19 @@ namespace SEA.GM
             return true;
         }
 
-        private MonitorPropertyChanges() { }
-
-        public MonitorPropertyChanges(Action<uint, string> doOut)
-        {
-            this.doOut = doOut;
-        }
-
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges Init()");
+            if (isInit)
+                return;
+
             base.Init(objectBuilder);
             _objectBuilder = objectBuilder;
 
-            block = Entity as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
+            block = Entity as Sandbox.ModAPI.Ingame.IMyFunctionalBlock;
 
             isInit = true;
 
-            NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
+            NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
         public override void UpdateAfterSimulation100()
@@ -266,11 +269,13 @@ namespace SEA.GM
             if (!isInit)
                 return;
 
+            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges UpdateAfterSimulation100(block:" + block.EntityId.ToString() + ")");
+
             foreach (var element in propertisFloat)
             {
                 tempFloatValue = block.GetValue<float>(element.Key);
                 if (tempFloatValue == element.Value)
-                    return;
+                    continue;
 
                 propertisFloat[element.Key] = tempFloatValue;
 
@@ -290,7 +295,7 @@ namespace SEA.GM
             {
                 tempBoolValue = block.GetValue<bool>(element.Key);
                 if (tempBoolValue == element.Value)
-                    return;
+                    continue;
 
                 propertisBool[element.Key] = tempBoolValue;
 
@@ -308,5 +313,99 @@ namespace SEA.GM
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
+    }
+
+
+    public abstract class SEAGameLogicComponent : MyEntityComponentBase
+    {
+        public MyEntityUpdateEnum NeedsUpdate
+        {
+            get
+            {
+                MyEntityUpdateEnum needsUpdate = MyEntityUpdateEnum.NONE;
+
+                if ((Container.Entity.Flags & EntityFlags.NeedsUpdate) != 0)
+                    needsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
+
+                if ((Container.Entity.Flags & EntityFlags.NeedsUpdate10) != 0)
+                    needsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;
+
+                if ((Container.Entity.Flags & EntityFlags.NeedsUpdate100) != 0)
+                    needsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
+
+                if ((Container.Entity.Flags & EntityFlags.NeedsUpdateBeforeNextFrame) != 0)
+                    needsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+
+                return needsUpdate;
+            }
+            set
+            {
+                bool hasChanged = value != NeedsUpdate;
+
+                if (hasChanged)
+                {
+                    if (Container.Entity.InScene)
+                        MyAPIGatewayShortcuts.UnregisterEntityUpdate(Container.Entity, false);
+
+                    Container.Entity.Flags &= ~EntityFlags.NeedsUpdateBeforeNextFrame;
+                    Container.Entity.Flags &= ~EntityFlags.NeedsUpdate;
+                    Container.Entity.Flags &= ~EntityFlags.NeedsUpdate10;
+                    Container.Entity.Flags &= ~EntityFlags.NeedsUpdate100;
+
+                    if ((value & MyEntityUpdateEnum.BEFORE_NEXT_FRAME) != 0)
+                        Container.Entity.Flags |= EntityFlags.NeedsUpdateBeforeNextFrame;
+                    if ((value & MyEntityUpdateEnum.EACH_FRAME) != 0)
+                        Container.Entity.Flags |= EntityFlags.NeedsUpdate;
+                    if ((value & MyEntityUpdateEnum.EACH_10TH_FRAME) != 0)
+                        Container.Entity.Flags |= EntityFlags.NeedsUpdate10;
+                    if ((value & MyEntityUpdateEnum.EACH_100TH_FRAME) != 0)
+                        Container.Entity.Flags |= EntityFlags.NeedsUpdate100;
+
+                    if (Container.Entity.InScene)
+                        MyAPIGatewayShortcuts.RegisterEntityUpdate(Container.Entity);
+                }
+            }
+        }
+
+        [System.Xml.Serialization.XmlIgnore]
+        public bool Closed { get; protected set; }
+        [System.Xml.Serialization.XmlIgnore]
+        public bool MarkedForClose { get; protected set; }
+        //Called after internal implementation
+        public virtual void UpdateOnceBeforeFrame()
+        { }
+        public virtual void UpdateBeforeSimulation()
+        { }
+        public virtual void UpdateBeforeSimulation10()
+        { }
+        public virtual void UpdateBeforeSimulation100()
+        { }
+        public virtual void UpdateAfterSimulation()
+        { }
+        public virtual void UpdateAfterSimulation10()
+        { }
+        public virtual void UpdateAfterSimulation100()
+        { }
+        public virtual void UpdatingStopped()
+        { }
+
+        //Entities are usualy initialized from builder immediately after creation by factory
+        public virtual void Init(MyObjectBuilder_EntityBase objectBuilder)
+        { }
+        public abstract MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false);
+
+        //Only use for setting flags, no heavy logic or cleanup
+        public virtual void MarkForClose()
+        { }
+
+        //Called before internal implementation
+        //Cleanup here
+        public virtual void Close()
+        { }
+
+        public override string ComponentTypeDebugString
+        {
+            get { return "SEA Game Logic"; }
+        }
     }
 }

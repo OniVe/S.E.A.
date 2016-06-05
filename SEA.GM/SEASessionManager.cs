@@ -320,22 +320,46 @@ namespace SEA.GM.Managers
 
         public bool TrackBlockValue(long entityId, string propertyId)
         {
-            SEAUtilities.Logging.Static.WriteLine("TrackBlockValue(entityId:"+entityId.ToString()+", propertyId:"+propertyId+")");
+            SEAUtilities.Logging.Static.WriteLine("TrackBlockValue(entityId:" + entityId.ToString() + ", propertyId:" + propertyId + ")");
             var block = GetTerminalBlock(entityId);
             if (block == null)
                 return false;
 
-            var monitor = block.GameLogic.GetAs<MonitorPropertyChanges>();
+
+            SEAUtilities.Logging.Static.WriteLine(" GameLogic Types:");
+            foreach (var type in block.GameLogic.Container)
+                SEAUtilities.Logging.Static.WriteLine("     " + type.GetType().ToString());
+
+            SEAUtilities.Logging.Static.WriteLine(" GameLogic ComponentTypes:");
+            foreach (var type in block.GameLogic.Container.GetComponentTypes())
+                SEAUtilities.Logging.Static.WriteLine("     " + type.ToString());
+
+            var monitor = block.GameLogic.GetAs<MonitorPropertyChanges>();//MonitorPropertyChanges
             if (monitor == null)
             {
                 SEAUtilities.Logging.Static.WriteLine("TrackBlockValue monitor is null");
+
                 monitor = new MonitorPropertyChanges(doOut);
-                block.GameLogic.Container.Add(monitor);
-                SEAUtilities.Logging.Static.WriteLine("TrackBlockValue try Init");
+                block.GameLogic.Container.Add(typeof(MonitorPropertyChanges), monitor);
                 monitor.Init(block.GetObjectBuilder());
+
+                //SEAUtilities.Logging.Static.WriteLine("TrackBlockValue try Init");
+                //if (!monitor.Initialize(block.GetObjectBuilder()))
+                //return false;
             }
 
-            return monitor.Add(propertyId);
+            SEAUtilities.Logging.Static.WriteLine(" GameLogic Types:");
+            foreach (var type in block.GameLogic.Container)
+                SEAUtilities.Logging.Static.WriteLine("     " + type.GetType().ToString());
+
+            SEAUtilities.Logging.Static.WriteLine(" GameLogic ComponentTypes:");
+            foreach (var type in block.GameLogic.Container.GetComponentTypes())
+                SEAUtilities.Logging.Static.WriteLine("     " + type.ToString());
+
+            return true;
+
+
+            //return monitor.Add(propertyId);
         }
 
         public Hashtable GetValueColor(long entityId, string propertyId)
