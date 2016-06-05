@@ -16,13 +16,17 @@ namespace SEA.GM.Managers
     {
         private Dictionary<long, Sandbox.ModAPI.Ingame.IMyTerminalBlock> blocksCache;
         private Dictionary<CompositeKey, Sandbox.ModAPI.Ingame.IMyBlockGroup> groupsCache;
+        private Action<uint, string> doOut;
 
-        public SEASessionManager()
+        public SEASessionManager(Action<uint, string> doOut)
         {
             blocksCache = new Dictionary<long, Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
             groupsCache = new Dictionary<CompositeKey, Sandbox.ModAPI.Ingame.IMyBlockGroup>();
+
+            this.doOut = doOut;
         }
-        private IMyGridTerminalSystem GetTerminalSystem( long entityId )
+
+        private IMyGridTerminalSystem GetTerminalSystem(long entityId)
         {
             IMyEntity entity;
             if (MyAPIGateway.Entities.TryGetEntityById(entityId, out entity))
@@ -31,7 +35,7 @@ namespace SEA.GM.Managers
             return null;
         }
 
-        private Sandbox.ModAPI.Ingame.IMyTerminalBlock GetTerminalBlock( long entityId )
+        private Sandbox.ModAPI.Ingame.IMyTerminalBlock GetTerminalBlock(long entityId)
         {
             Sandbox.ModAPI.Ingame.IMyTerminalBlock block;
             if (blocksCache.TryGetValue(entityId, out block))
@@ -48,7 +52,7 @@ namespace SEA.GM.Managers
             return block;
         }
 
-        private List<Sandbox.ModAPI.Ingame.IMyTerminalBlock> GetGroupBlocks( long entityId, string groupName, bool first = false )
+        private List<Sandbox.ModAPI.Ingame.IMyTerminalBlock> GetGroupBlocks(long entityId, string groupName, bool first = false)
         {
             var groupKey = new CompositeKey() { longId = entityId, stringId = groupName };
             Sandbox.ModAPI.Ingame.IMyBlockGroup group;
@@ -94,7 +98,7 @@ namespace SEA.GM.Managers
                 }
             return grigList;
         }
-        public List<BlockView<EntityType>> GetAvalibleBlocks( long entityId )
+        public List<BlockView<EntityType>> GetAvalibleBlocks(long entityId)
         {
             var blocksList = new List<BlockView<EntityType>>();
             var gts = GetTerminalSystem(entityId);
@@ -117,7 +121,7 @@ namespace SEA.GM.Managers
 
             return blocksList;
         }
-        public List<ITerminalAction> GetActions( long entityId )
+        public List<ITerminalAction> GetActions(long entityId)
         {
             var actionList = new List<ITerminalAction>();
             var block = GetTerminalBlock(entityId);
@@ -126,7 +130,7 @@ namespace SEA.GM.Managers
 
             return actionList;
         }
-        public List<ITerminalAction> GetActions( long entityId, string groupName )
+        public List<ITerminalAction> GetActions(long entityId, string groupName)
         {
             var actionList = new List<ITerminalAction>();
             var blocks = GetGroupBlocks(entityId, groupName);
@@ -145,7 +149,7 @@ namespace SEA.GM.Managers
             return uniqueActions.ToList();
         }
 
-        public List<ITerminalProperty> GetProperties( long entityId, PropertyType propertyType )
+        public List<ITerminalProperty> GetProperties(long entityId, PropertyType propertyType)
         {
             var propertyList = new List<ITerminalProperty>();
 
@@ -161,7 +165,7 @@ namespace SEA.GM.Managers
 
             return propertyList;
         }
-        public List<ITerminalProperty> GetProperties( long entityId, string groupName, PropertyType propertyType )
+        public List<ITerminalProperty> GetProperties(long entityId, string groupName, PropertyType propertyType)
         {
             var propertyList = new List<ITerminalProperty>();
             var blocks = GetGroupBlocks(entityId, groupName);
@@ -188,7 +192,7 @@ namespace SEA.GM.Managers
             return uniquePropertys.ToList();
         }
 
-        public bool SetValueBool( long entityId, string propertyId, bool value )
+        public bool SetValueBool(long entityId, string propertyId, bool value)
         {
             var block = GetTerminalBlock(entityId);
             if (block == null)
@@ -197,7 +201,7 @@ namespace SEA.GM.Managers
             block.SetValue<bool>(propertyId, value);
             return true;
         }
-        public bool SetValueBool( long entityId, string groupName, string propertyId, bool value )
+        public bool SetValueBool(long entityId, string groupName, string propertyId, bool value)
         {
             var blocks = GetGroupBlocks(entityId, groupName);
             if (blocks == null || blocks.Count == 0)
@@ -210,7 +214,7 @@ namespace SEA.GM.Managers
             return true;
         }
 
-        public bool SetValueFloat( long entityId, string propertyId, float value )
+        public bool SetValueFloat(long entityId, string propertyId, float value)
         {
             var block = GetTerminalBlock(entityId);
             if (block == null)
@@ -219,7 +223,7 @@ namespace SEA.GM.Managers
             block.SetValue<float>(propertyId, value);
             return true;
         }
-        public bool SetValueFloat( long entityId, string groupName, string propertyId, float value )
+        public bool SetValueFloat(long entityId, string groupName, string propertyId, float value)
         {
             var blocks = GetGroupBlocks(entityId, groupName);
             if (blocks == null || blocks.Count == 0)
@@ -232,7 +236,7 @@ namespace SEA.GM.Managers
             return true;
         }
 
-        public bool SetBlockAction( long entityId, string actionName )
+        public bool SetBlockAction(long entityId, string actionName)
         {
             var block = GetTerminalBlock(entityId);
             if (block == null)
@@ -241,7 +245,7 @@ namespace SEA.GM.Managers
             block.ApplyAction(actionName);
             return true;
         }
-        public bool SetBlockAction( long entityId, string groupName, string actionName )
+        public bool SetBlockAction(long entityId, string groupName, string actionName)
         {
             var blocks = GetGroupBlocks(entityId, groupName);
             if (blocks == null || blocks.Count == 0)
@@ -254,7 +258,7 @@ namespace SEA.GM.Managers
             return true;
         }
 
-        public bool SetValueColor( long entityId, string propertyId, Hashtable value )
+        public bool SetValueColor(long entityId, string propertyId, Hashtable value)
         {
             var block = GetTerminalBlock(entityId);
             if (block == null)
@@ -268,7 +272,7 @@ namespace SEA.GM.Managers
             return true;
         }
 
-        public List<BlockView<string>> GetBlocks( long entityId, string groupName )
+        public List<BlockView<string>> GetBlocks(long entityId, string groupName)
         {
             var blockList = new List<BlockView<string>>();
             var blocks = GetGroupBlocks(entityId, groupName);
@@ -280,7 +284,7 @@ namespace SEA.GM.Managers
             return blockList;
         }
 
-        public bool? GetValueBool( long entityId, string propertyId )
+        public bool? GetValueBool(long entityId, string propertyId)
         {
             var block = GetTerminalBlock(entityId);
             if (block == null)
@@ -288,7 +292,7 @@ namespace SEA.GM.Managers
 
             return block.GetValue<bool>(propertyId);
         }
-        public bool? GetValueBool( long entityId, string groupName, string propertyId )
+        public bool? GetValueBool(long entityId, string groupName, string propertyId)
         {
             var blocks = GetGroupBlocks(entityId, groupName, true);
             if (blocks == null || blocks.Count == 0)
@@ -297,7 +301,7 @@ namespace SEA.GM.Managers
                 return blocks[0].GetValue<bool>(propertyId);
         }
 
-        public float? GetValueFloat( long entityId, string propertyId )
+        public float? GetValueFloat(long entityId, string propertyId)
         {
             var block = GetTerminalBlock(entityId);
             if (block == null)
@@ -305,7 +309,7 @@ namespace SEA.GM.Managers
 
             return block.GetValue<float>(propertyId);
         }
-        public float? GetValueFloat( long entityId, string groupName, string propertyId )
+        public float? GetValueFloat(long entityId, string groupName, string propertyId)
         {
             var blocks = GetGroupBlocks(entityId, groupName, true);
             if (blocks == null || blocks.Count == 0)
@@ -314,7 +318,23 @@ namespace SEA.GM.Managers
                 return blocks[0].GetValue<float>(propertyId);
         }
 
-        public Hashtable GetValueColor( long entityId, string propertyId )
+        public bool TrackBlockValue(long entityId, string propertyId)
+        {
+            var block = GetTerminalBlock(entityId);
+            if (block != null)
+                return false;
+
+            var monitor = block.GameLogic.GetAs<MonitorPropertyChanges>();
+            if (monitor == null)
+            {
+                monitor = new MonitorPropertyChanges(doOut);
+                block.GameLogic.Container.Add(monitor);
+            }
+
+            return monitor.Add(propertyId);
+        }
+
+        public Hashtable GetValueColor(long entityId, string propertyId)
         {
             var block = GetTerminalBlock(entityId);
             if (block == null)
@@ -324,12 +344,12 @@ namespace SEA.GM.Managers
             return color == null ? null : color.ToHashtable();
         }
 
-         private struct CompositeKey
+        private struct CompositeKey
         {
             public long longId;
             public string stringId;
 
-            public CompositeKey( long entityId, string propertyId )
+            public CompositeKey(long entityId, string propertyId)
             {
                 this.longId = entityId;
                 this.stringId = propertyId;
@@ -343,15 +363,15 @@ namespace SEA.GM.Managers
             VRage.Game.MyRelationsBetweenPlayerAndBlock.Owner,
             VRage.Game.MyRelationsBetweenPlayerAndBlock.FactionShare};
 
-        public static bool AccesIsAllowed( this Sandbox.ModAPI.Ingame.IMyTerminalBlock self, long playerId )
+        public static bool AccesIsAllowed(this Sandbox.ModAPI.Ingame.IMyTerminalBlock self, long playerId)
         {
             return allowAcces.Contains(self.GetUserRelationToOwner(playerId));
         }
-        public static bool AccesIsAllowed( this Sandbox.ModAPI.Ingame.IMyBlockGroup self, long playerId )
+        public static bool AccesIsAllowed(this Sandbox.ModAPI.Ingame.IMyBlockGroup self, long playerId)
         {
             return self.Blocks.Any(x => x.AccesIsAllowed(playerId));
         }
-        public static bool HasLocalPlayerAccess( this Sandbox.ModAPI.Ingame.IMyBlockGroup self )
+        public static bool HasLocalPlayerAccess(this Sandbox.ModAPI.Ingame.IMyBlockGroup self)
         {
             return self.Blocks.Any(x => x.HasLocalPlayerAccess());
         }
@@ -359,7 +379,7 @@ namespace SEA.GM.Managers
 
     public static class ColorExtensions
     {
-        public static Hashtable ToHashtable( this Color self )
+        public static Hashtable ToHashtable(this Color self)
         {
             return new Hashtable() { { "r", self.R }, { "g", self.G }, { "b", self.B }, { "a", self.A } };
         }

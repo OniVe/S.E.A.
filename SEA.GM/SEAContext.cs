@@ -20,7 +20,7 @@ namespace SEA.GM.Context
 
         public SEAContext(out bool success)
         {
-            sessionManager = new SEASessionManager();
+            sessionManager = new SEASessionManager(DoOut);
 
             #region Algorithms
 
@@ -29,6 +29,7 @@ namespace SEA.GM.Context
                 { 1 , new Algorithm(GetCubeGrids) },
                 { 2 , new Algorithm(GetAvalibleBlocks) },
                 { 3 , new Algorithm(GetGroupBlocks) },
+                { 4 , new Algorithm(TrackBlockValue) },
 
                 { 10, new Algorithm(GetBlockProperties) },
                 { 11, new Algorithm(GetBlockPropertiesBool) },
@@ -268,6 +269,24 @@ namespace SEA.GM.Context
                     { "value", item.Id},
                     { "text", item.Name.ToString()}
                 }).ToArray());
+        }
+
+        private object TrackBlockValue(object value)
+        {
+            if (value is Hashtable)
+            {
+                var _value = (Hashtable)value;
+                EntityKey entityKey;
+                if (_value.ContainsKey("eId") &&
+                    _value.ContainsKey("propId") &&
+                    TryParseEntityId(_value["eId"], out entityKey))
+                {
+                    return entityKey.IsGroup ?
+                        false :
+                        sessionManager.TrackBlockValue(entityKey.EntityId, (string)_value["propId"]);
+                }
+            }
+            return null;
         }
 
         private object GetValueBool(object value)

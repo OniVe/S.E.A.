@@ -443,6 +443,8 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
             self.setValueLabel(self.options.value);
             self._valueToPosition();
         });
+
+        Hub.Game.trackBlockValue(self.options.eId, self.options.property);
     },
 	_touchStart: function ( event ){
 		

@@ -2,6 +2,9 @@
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using VRage.Game.Components;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
@@ -40,13 +43,11 @@ namespace SEA.GM
             base.Init(objectBuilder);
 
             _objectBuilder = objectBuilder;
-            if (Entity != null)
-            {
-                context = new DeltaLimitSwitch<T>(Entity);
-                isInit = this.Init();
 
-                NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
-            }
+            context = new DeltaLimitSwitch<T>(Entity);
+            isInit = this.Init();
+
+            NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
         }
 
         public abstract bool Init();
@@ -62,7 +63,7 @@ namespace SEA.GM
         public static void AddControlProperty<U>(string id, Func<DeltaLimitSwitch<T>, float> getter, Action<DeltaLimitSwitch<T>, float> setter) where U : LimitProperty<T>
         {
             var property = MyAPIGateway.TerminalControls.CreateProperty<float, T>(id);
-            property.SupportsMultipleBlocks = false;
+            property.SupportsMultipleBlocks = true;
             property.Getter = (block) => { return getter(block.GameLogic.GetAs<U>().context); };
             property.Setter = (block, value) => { setter(block.GameLogic.GetAs<U>().context, value); };
 
@@ -197,4 +198,112 @@ namespace SEA.GM
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_ExtendedPistonBase))]
     public class ExtendedPistonBasePositionProperty : PistonBasePositionProperty { }
 
+
+    public class MonitorPropertyChanges : MyGameLogicComponent
+    {
+        private bool isInit = false;
+        private MyObjectBuilder_EntityBase _objectBuilder;
+
+        private Sandbox.ModAPI.Ingame.IMyTerminalBlock block;
+        private Dictionary<string, float> propertisFloat;
+        private Dictionary<string, bool> propertisBool;
+
+        private float tempFloatValue;
+        private bool tempBoolValue;
+        private StringBuilder tempStringBuilder;
+
+        private Action<uint, string> doOut;
+
+        public bool Add(string propertyId)
+        {
+            //propertyId = propertyId.ToLower();
+            var property = block.GetProperty(propertyId);
+            if (property == null)
+                return false;
+
+            if (property.Is<float>())
+            {
+                if (!propertisFloat.ContainsKey(propertyId))
+                    propertisFloat.Add(propertyId, block.GetValue<float>(propertyId));
+            }
+            else if (property.Is<bool>())
+            {
+                if (!propertisBool.ContainsKey(propertyId))
+                    propertisBool.Add(propertyId, block.GetValue<bool>(propertyId));
+            }
+            else
+                return false;
+
+            return true;
+        }
+
+        private MonitorPropertyChanges() { }
+
+        public MonitorPropertyChanges(Action<uint, string> doOut)
+        {
+            this.doOut = doOut;
+        }
+
+        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
+        {
+            base.Init(objectBuilder);
+
+            _objectBuilder = objectBuilder;
+
+            block = Entity as Sandbox.ModAPI.Ingame.IMyTerminalBlock;
+            tempStringBuilder = new StringBuilder();
+
+            isInit = true;
+
+            NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
+        }
+
+        public override void UpdateAfterSimulation100()
+        {
+            if (!isInit)
+                return;
+
+            foreach (var element in propertisFloat)
+            {
+                tempFloatValue = block.GetValue<float>(element.Key);
+                if (tempFloatValue == element.Value)
+                    return;
+
+                propertisFloat[element.Key] = tempFloatValue;
+
+                tempStringBuilder.Length = 0;
+                tempStringBuilder
+                    .JObjectStart()
+                    .JObjectStringKeyValuePair(
+                        "eId", block.EntityId.ToString(),
+                        "propId", element.Key,
+                        "value", tempFloatValue.ToString())
+                    .JObjectEnd();
+
+                doOut(1, tempStringBuilder.ToString());
+            }
+
+            foreach (var element in propertisBool)
+            {
+                tempBoolValue = block.GetValue<bool>(element.Key);
+                if (tempBoolValue == element.Value)
+                    return;
+
+                propertisBool[element.Key] = tempBoolValue;
+
+                tempStringBuilder.Length = 0;
+                tempStringBuilder
+                    .JObjectStart()
+                    .JObjectStringKeyValuePair(
+                        "eId", block.EntityId.ToString(),
+                        "propId", element.Key,
+                        "value", tempBoolValue.ToString())
+                    .JObjectEnd();
+
+                doOut(1, tempStringBuilder.ToString());
+            }
+        }
+
+        public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
+    }
 }
