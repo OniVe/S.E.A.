@@ -14,7 +14,7 @@ namespace SEA.GM.Context
         private bool sea_p_online = false;
         private System.Timers.Timer connectionToServerTimeoutTimer;
         private Func<uint, string, string> internalDoHandler;
-        private Action<uint, string> externalDoHandler;
+        private Action<uint, string, IList<string>> externalDoHandler;
         private Dictionary<uint, Algorithm> algorithms;
         private SEASessionManager sessionManager;
 
@@ -29,7 +29,6 @@ namespace SEA.GM.Context
                 { 1 , new Algorithm(GetCubeGrids) },
                 { 2 , new Algorithm(GetAvalibleBlocks) },
                 { 3 , new Algorithm(GetGroupBlocks) },
-                { 4 , new Algorithm(TrackBlockValue) },
 
                 { 10, new Algorithm(GetBlockProperties) },
                 { 11, new Algorithm(GetBlockPropertiesBool) },
@@ -42,6 +41,10 @@ namespace SEA.GM.Context
                 { 31, new Algorithm(SetValueBool) },
                 { 32, new Algorithm(SetValueFloat) },
                 { 33, new Algorithm(SetBlockAction) },
+
+                { 41 , new Algorithm(AddValueTracking) },
+                { 42 , new Algorithm(RemoveValueTracking) },
+                { 43 , new Algorithm(RemoveAllTracking) },
             };
             #endregion
 
@@ -70,7 +73,7 @@ namespace SEA.GM.Context
         {
             MyAPIUtilities.Static.Variables.Remove("SEA.GM-Init");
             MyAPIUtilities.Static.Variables.Remove("SEA.GM-DoHandler");
-            DoOut(0, "\"disconnect\"");// Notify the clients about disconnecting
+            DoOut(0, "\"disconnect\"", null);// Notify the clients about disconnecting
             SEAUtilities.Logging.Static.WriteLine("SEA Listening Stop");
         }
 
@@ -81,7 +84,7 @@ namespace SEA.GM.Context
                 {
                     case "connect":
 
-                        externalDoHandler = MyAPIUtilities.Static.Variables["SEA.P-DoHandler"] as Action<uint, string>;
+                        externalDoHandler = MyAPIUtilities.Static.Variables["SEA.P-DoHandler"] as Action<uint, string, IList<string>>;
                         MyAPIUtilities.Static.Variables.Remove("SEA.P-DoHandler");
 
                         sea_p_online = true;
@@ -92,10 +95,10 @@ namespace SEA.GM.Context
                 return null;
         }
 
-        public void DoOut(uint id, string value)
+        public void DoOut(uint id, string value, IList<string> userIds)
         {
             if (sea_p_online)
-                externalDoHandler(id, value);
+                externalDoHandler(id, value, userIds);
         }
 
         /* ! Runs in the main thread ! */
@@ -271,27 +274,59 @@ namespace SEA.GM.Context
                 }).ToArray());
         }
 
-        private object TrackBlockValue(object value)
+        private object AddValueTracking(object value)
         {
-            SEAUtilities.Logging.Static.WriteLine("TrackBlockValue Context");
             if (value is Hashtable)
             {
-                SEAUtilities.Logging.Static.WriteLine("TrackBlockValue is Hashtable");
+                var _value = (Hashtable)value;
+                EntityKey entityKey;
+                if (_value.ContainsKey("eId") &&
+                    _value.ContainsKey("propId") &&
+                    _value.ContainsKey("connId") &&
+                    TryParseEntityId(_value["eId"], out entityKey))
+                {
+                    return entityKey.IsGroup ?
+                        false :
+                        sessionManager.AddValueTracking(entityKey.EntityId, (string)_value["propId"], (string)_value["connId"]);
+                }
+            }
+            return null;
+        }
+        private object RemoveValueTracking(object value)
+        {
+            /*if (value is Hashtable)
+            {
                 var _value = (Hashtable)value;
                 EntityKey entityKey;
                 if (_value.ContainsKey("eId") &&
                     _value.ContainsKey("propId") &&
                     TryParseEntityId(_value["eId"], out entityKey))
                 {
-                    SEAUtilities.Logging.Static.WriteLine("TrackBlockValue valid");
                     return entityKey.IsGroup ?
                         false :
-                        sessionManager.TrackBlockValue(entityKey.EntityId, (string)_value["propId"]);
+                        sessionManager.AddValueTracking(entityKey.EntityId, (string)_value["propId"]);
                 }
-            }
+            }*/
             return null;
         }
-
+        private object RemoveAllTracking(object value)
+        {
+            /*if (value is Hashtable)
+            {
+                var _value = (Hashtable)value;
+                EntityKey entityKey;
+                if (_value.ContainsKey("eId") &&
+                    _value.ContainsKey("propId") &&
+                    TryParseEntityId(_value["eId"], out entityKey))
+                {
+                    return entityKey.IsGroup ?
+                        false :
+                        sessionManager.AddBlockValueTracking(entityKey.EntityId, (string)_value["propId"]);
+                }
+            }*/
+            return null;
+        }
+        
         private object GetValueBool(object value)
         {
             if (value is Hashtable)

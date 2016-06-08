@@ -115,8 +115,9 @@ var Hub = (function (){
 				Control:{
 					getAll : function ( gridId ){ return seaHub.server.doAsync(2, Utilities.tryStringifyJSON(gridId)).pipe(Utilities.tryParseJSON); }
 				},
-                getGroupBlocks         : function ( gridId, groupName )   { return seaHub.server.doAsync(3, Utilities.tryStringifyJSON( {gridId: gridId, groupName: groupName} )).pipe(Utilities.tryParseJSON); },
-                trackBlockValue        : function ( eId, property)        { return seaHub.server.doAsync(4, Utilities.tryStringifyJSON( {eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);}
+                getGroupBlocks         : function ( gridId, groupName )   { return seaHub.server.doAsync(3 , Utilities.tryStringifyJSON( {gridId: gridId, groupName: groupName} )).pipe(Utilities.tryParseJSON); },
+                addValueTracking       : function ( eId, property)        { return seaHub.server.doAsync(41, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);},
+			    removeValueTracking    : function ( eId, property)        { return seaHub.server.doAsync(42, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);}
 			},
 			errorCodeString: function ( code ){
 				
@@ -129,7 +130,9 @@ var Hub = (function (){
 				}
 			}
 		};
+
     //Client
+
     algorithms = [
     function (obj){/*Func 0 - ! RESERVED !*/
 

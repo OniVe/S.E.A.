@@ -1,5 +1,4 @@
-﻿using Sandbox.Common.ObjectBuilders;
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
 using SEA.GM.GameLogic;
 using System;
@@ -8,6 +7,7 @@ using System.Text;
 using VRage.Game.Components;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
+using System.Linq;
 
 namespace SEA.GM
 {
@@ -72,16 +72,11 @@ namespace SEA.GM
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            base.Init(objectBuilder);
             _objectBuilder = objectBuilder;
             Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
         }
 
-        public override void UpdateBeforeSimulation()
-        {
-            //SEAUtilities.Logging.Static.WriteLine("LimitProperty UpdateBeforeSimulation(block:" + Entity.EntityId.ToString() + ") T: " + this.GetType().ToString());
-            context.Update();
-        }
+        public override void UpdateBeforeSimulation() { context.Update(); }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
 
@@ -253,48 +248,46 @@ namespace SEA.GM
 
     public class MonitorPropertyChanges : MyGameLogicComponent
     {
-        internal bool isInit = false;
+        private bool isInit = false;
         internal MyObjectBuilder_EntityBase _objectBuilder;
 
-        internal Sandbox.ModAPI.Ingame.IMyFunctionalBlock block;
+        private Sandbox.ModAPI.Ingame.IMyFunctionalBlock block;
 
-        internal Dictionary<string, float> propertisFloat = new Dictionary<string, float>();
-        internal Dictionary<string, bool> propertisBool = new Dictionary<string, bool>();
+        private Dictionary<string, Context<float>> propertisFloat = new Dictionary<string, Context<float>>();
+        private Dictionary<string, Context<bool>> propertisBool = new Dictionary<string, Context<bool>>();
 
-        internal float tempFloatValue = 0;
-        internal bool tempBoolValue = false;
-        internal StringBuilder tempStringBuilder = new StringBuilder();
+        private StringBuilder tempStringBuilder = new StringBuilder();
 
-        internal Action<uint, string> doOut;
+        internal Action<uint, string, IList<string>> doOut;
 
-        public MonitorPropertyChanges(Action<uint, string> doOut)
+        public MonitorPropertyChanges(Action<uint, string, IList<string>> doOut)
         {
             this.doOut = doOut;
         }
 
-        internal bool Add(string propertyId)
+        internal bool Add(string connectionId, string propertyId)
         {
-            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges Add(" + propertyId + ")");
-            //propertyId = propertyId.ToLower();
             var property = block.GetProperty(propertyId);
             if (property == null)
                 return false;
 
             if (property.Is<float>())
             {
-                SEAUtilities.Logging.Static.WriteLine("    MonitorPropertyChanges is float");
-                if (!propertisFloat.ContainsKey(propertyId))
-                    propertisFloat.Add(propertyId, block.GetValue<float>(propertyId));
+                if (propertisFloat.ContainsKey(propertyId))
+                    return propertisFloat[propertyId].Clients.Add(connectionId);
+                else
+                    propertisFloat.Add(propertyId, new Context<float>(connectionId) { Value = block.GetValue<float>(propertyId) });
             }
             else if (property.Is<bool>())
             {
-                SEAUtilities.Logging.Static.WriteLine("    MonitorPropertyChanges is bool");
-                if (!propertisBool.ContainsKey(propertyId))
-                    propertisBool.Add(propertyId, block.GetValue<bool>(propertyId));
+                if (propertisBool.ContainsKey(propertyId))
+                    return propertisBool[propertyId].Clients.Add(connectionId);
+                else
+                    propertisBool.Add(propertyId, new Context<bool>(connectionId) { Value = block.GetValue<bool>(propertyId) });
             }
             else
                 return false;
-              
+
             return true;
         }
 
@@ -303,62 +296,82 @@ namespace SEA.GM
             base.Init(objectBuilder);
             _objectBuilder = objectBuilder;
 
-            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges Init()");
-
             block = Entity as Sandbox.ModAPI.Ingame.IMyFunctionalBlock;
 
             isInit = true;
 
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
+            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;
         }
 
-        public override void UpdateAfterSimulation100()
+        public override void UpdateAfterSimulation10()
         {
             if (!isInit)
                 return;
 
-            //SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges UpdateAfterSimulation100(block:" + Entity.EntityId.ToString() + ")");
             try
             {
                 foreach (var element in propertisFloat)
                 {
-                    tempFloatValue = block.GetValue<float>(element.Key);
-                    if (tempFloatValue == element.Value)
+                    if(!element.Value.Change(block.GetValue<float>(element.Key)))
                         continue;
-
-                    propertisFloat[element.Key] = tempFloatValue;
 
                     tempStringBuilder.Length = 0;
                     tempStringBuilder
                         .JObjectStringKeyValuePair(
                             "eId", block.EntityId.ToString(),
                             "propId", element.Key,
-                            "value", tempFloatValue.ToString());
+                            "value", element.Value.ToString());
 
-                    doOut(1, tempStringBuilder.ToString());
+                    doOut(1, tempStringBuilder.ToString(), element.Value.Clients.ToArray());
                 }
 
                 foreach (var element in propertisBool)
                 {
-                    tempBoolValue = block.GetValue<bool>(element.Key);
-                    if (tempBoolValue == element.Value)
+                    if (!element.Value.Change(block.GetValue<bool>(element.Key)))
                         continue;
-
-                    propertisBool[element.Key] = tempBoolValue;
 
                     tempStringBuilder.Length = 0;
                     tempStringBuilder
                         .JObjectStringKeyValuePair(
                             "eId", block.EntityId.ToString(),
                             "propId", element.Key,
-                            "value", tempBoolValue.ToString());
+                            "value", element.Value.ToString());
 
-                    doOut(1, tempStringBuilder.ToString());
+                    doOut(1, tempStringBuilder.ToString(), element.Value.Clients.ToArray());
                 }
             }
             catch { }
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
+
+        private class Context<T> where T: struct, IComparable<T>
+        {
+            public T Value { get; set; }
+            public HashSet<string> Clients { get; set; }
+
+            public Context()
+            {
+                Clients = new HashSet<string>();
+            }
+            public Context(string connectionId) : base()
+            {
+                Clients.Add(connectionId);
+            }
+
+            public bool Change(T value)
+            {
+                if (Value.Equals(value))
+                    return false;
+
+                Value = value;
+                return true;
+            }
+
+            public override string ToString()
+            {
+                return Value.ToString();
+            }
+        }
     }
 }

@@ -16,9 +16,9 @@ namespace SEA.GM.Managers
     {
         private Dictionary<long, Sandbox.ModAPI.Ingame.IMyTerminalBlock> blocksCache;
         private Dictionary<CompositeKey, Sandbox.ModAPI.Ingame.IMyBlockGroup> groupsCache;
-        private Action<uint, string> doOut;
+        private Action<uint, string, IList<string>> doOut;
 
-        public SEASessionManager(Action<uint, string> doOut)
+        public SEASessionManager(Action<uint, string, IList<string>> doOut)
         {
             blocksCache = new Dictionary<long, Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
             groupsCache = new Dictionary<CompositeKey, Sandbox.ModAPI.Ingame.IMyBlockGroup>();
@@ -318,9 +318,8 @@ namespace SEA.GM.Managers
                 return blocks[0].GetValue<float>(propertyId);
         }
 
-        public bool TrackBlockValue(long entityId, string propertyId)
+        public bool AddValueTracking(long entityId, string propertyId, string connectionId)
         {
-            SEAUtilities.Logging.Static.WriteLine("TrackBlockValue(entityId:" + entityId.ToString() + ", propertyId:" + propertyId + ")");
             var block = GetTerminalBlock(entityId);
             if (block == null)
                 return false;
@@ -336,7 +335,7 @@ namespace SEA.GM.Managers
                 component.Init(block.GetObjectBuilder());
             }
 
-            return component.Add(propertyId);
+            return component.Add(connectionId, propertyId);
         }
 
         public Hashtable GetValueColor(long entityId, string propertyId)

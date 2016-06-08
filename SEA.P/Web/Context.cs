@@ -628,7 +628,7 @@ namespace SEA.P.Web
         private bool disposed = false;
         private bool sea_gm_online = false;
         private Func<uint, string, string> externalDoHandler;
-        private Action<uint, string> internalDoHandler;
+        private Action<uint, string, IList<string>> internalDoHandler;
         //private InputSimulator inputSimulator;
 
         private StorageManager storageManager;
@@ -658,7 +658,7 @@ namespace SEA.P.Web
             MyAPIUtilities.Static.Variables.Remove("SEA.GM-DoHandler");
             // - - - - - - - - - - - - - - - -
 
-            MyAPIUtilities.Static.Variables["SEA.P-DoHandler"] = internalDoHandler = new Action<uint, string>(DoIn);
+            MyAPIUtilities.Static.Variables["SEA.P-DoHandler"] = internalDoHandler = new Action<uint, string, IList<string>>(DoIn);
 
             var result = externalDoHandler(0, "\"connect\"");
             if (string.IsNullOrEmpty(result) || result != "true")
@@ -684,7 +684,7 @@ namespace SEA.P.Web
             }
         }
 
-        private void DoIn(uint id, string value)
+        private void DoIn(uint id, string value, IList<string> userIds)
         {
             if (id == 0)
                 switch (value)
@@ -696,7 +696,10 @@ namespace SEA.P.Web
                         break;
                 }
 
-            seaHubContext.Clients.All.doAsync(id, value);
+            if (userIds == null || userIds.Count == 0)
+                seaHubContext.Clients.All.doAsync(id, value);
+            else
+                seaHubContext.Clients.Users(userIds).doAsync(id, value);
         }
 
         public string DoOut(Command command, out ExecuteCode executeCode)
