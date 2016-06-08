@@ -20,6 +20,7 @@ namespace SEA.GM
                 CustomProperty<Sandbox.ModAPI.Ingame.IMyMotorStator, DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator>>.ControlProperty("Virtual Angle",
                     (context) => MyMath.RadiansToDegrees(context.Value),
                     (context, value) => context.Value = MyMath.DegreesToRadians(value),
+                    (entity) => new DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator>(entity),
                     (context) => context.Init(
                         (float)(Math.PI / 360f), // Δ 1.0 degress
                         4f,
@@ -42,6 +43,7 @@ namespace SEA.GM
                 CustomProperty<Sandbox.ModAPI.Ingame.IMyPistonBase, DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyPistonBase>>.ControlProperty("Virtual Position",
                     (context) => context.Value,
                     (context, value) => context.Value = value,
+                    (entity) => new DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyPistonBase>(entity),
                     (context) => context.Init(
                         0.1f, // Δ 0.2 meters
                         2f,
@@ -63,13 +65,7 @@ namespace SEA.GM
         }
     }
 
-    public abstract class CustomPropertyContext
-    {
-        internal abstract void SetBlock(IMyEntity block);
-        internal abstract void Update();
-    }
-
-    public class CustomProperty<T,U> : MyGameLogicComponent where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock where U: CustomPropertyContext, new()
+    public class CustomProperty<T, U> : MyGameLogicComponent where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock where U : CustomPropertyContext
     {
         internal MyObjectBuilder_EntityBase _objectBuilder;
         internal U context;
@@ -83,46 +79,98 @@ namespace SEA.GM
 
         public override void UpdateBeforeSimulation()
         {
-            SEAUtilities.Logging.Static.WriteLine("LimitProperty UpdateBeforeSimulation(block:" + Entity.EntityId.ToString() + ") T: " + this.GetType().ToString());
+            //SEAUtilities.Logging.Static.WriteLine("LimitProperty UpdateBeforeSimulation(block:" + Entity.EntityId.ToString() + ") T: " + this.GetType().ToString());
             context.Update();
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
 
-        private static U GetContext(IMyTerminalBlock block, Action<U> constructor)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="constructor">new U(entity) !System.Activator not allowed in scipt</param>
+        /// <param name="initiator">Like context.init(...)</param>
+        /// <returns></returns>
+        private static U GetContext(IMyEntity entity, Func<IMyEntity, U> constructor, Action<U> initiator)
         {
-            SEAUtilities.Logging.Static.WriteLine("GetContext (block:" + block.EntityId.ToString() + ")");
+            var entityGameLogic = SEACompositeGameLogicComponent.Get(entity);
+
+            CustomProperty<T, U> component;
+            component = entityGameLogic.GetAs<CustomProperty<T, U>>();
+            if (component != null)
+                return component.context;
+
+            component = new CustomProperty<T, U>() { context = constructor(entity) };
+            entityGameLogic.Add(component);
+            initiator(component.context);
+            component.Init(entity.GetObjectBuilder());
+
+            return component.context;
+
+            /*SEAUtilities.Logging.Static.WriteLine("GetContext (block:" + entity.EntityId.ToString() + ")");
             MyGameLogicComponent gameLogic;
+            CustomProperty<T, U> component;
 
-            if (block.GameLogic.Container.TryGet<MyGameLogicComponent>(out gameLogic) && !(gameLogic is MyNullGameLogicComponent))
+            if (entity.GameLogic.Container.TryGet<MyGameLogicComponent>(out gameLogic) && !(gameLogic is MyNullGameLogicComponent))
             {
-                //SEACompositeGameLogicComponent.Create(logicComponent, block);
-
-                SEAUtilities.Logging.Static.WriteLine(" GetContext success GameLogic:" + gameLogic.GetType().ToString());
-                return (gameLogic.GetAs<CustomProperty<T, U>>()).context;
+                SEAUtilities.Logging.Static.WriteLine(" GetContext is GameLogic:" + gameLogic.GetType().ToString());
+                if (gameLogic is SEACompositeGameLogicComponent)
+                {
+                    SEAUtilities.Logging.Static.WriteLine(" GetContext GameLogic is SEACompositeGameLogicComponent");
+                    component = gameLogic.GetAs<CustomProperty<T, U>>();
+                    if (component != null)
+                        return component.context;
+                }
+            }
+            else
+            {
+                gameLogic = new SEACompositeGameLogicComponent(entity);
+                SEAUtilities.Logging.Static.WriteLine(" GetContext new SEACompositeGameLogicComponent");
+                entity.GameLogic.Container.Add<MyGameLogicComponent>(gameLogic);
             }
 
-            SEAUtilities.Logging.Static.WriteLine("     GetContext new GameLogic...");
+            SEAUtilities.Logging.Static.WriteLine(" Types:");
+            foreach (var e in entity.GameLogic.Container.GetComponentTypes())
+                SEAUtilities.Logging.Static.WriteLine("     " + e.ToString());
 
-            var logicComponent = new CustomProperty<T,U>() { context = new U() };
-            logicComponent.context.SetBlock(block);
+            SEAUtilities.Logging.Static.WriteLine(" Full Types:");
+            foreach (var e in entity.GameLogic.Container)
+                SEAUtilities.Logging.Static.WriteLine("     " + e.GetType().ToString());
 
-            SEACompositeGameLogicComponent.Create(logicComponent, block);
-            constructor(logicComponent.context);
-            logicComponent.Init(block.GetObjectBuilder());
+            SEAUtilities.Logging.Static.WriteLine(" GetContext Component Add to Container");
+            component = new CustomProperty<T, U>() { context = constructor(entity) };
 
-            return logicComponent.context;
+            ((SEACompositeGameLogicComponent)gameLogic).Add(component);
+
+            initiator(component.context);
+            component.Init(entity.GetObjectBuilder());
+
+            return component.context;*/
         }
 
-        public static void ControlProperty(string id, Func<U, float> getter, Action<U, float> setter, Action<U> constructor)
+        /// <summary>
+        /// Get/set the property for the block.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="getter"></param>
+        /// <param name="setter"></param>
+        /// <param name="constructor">new U(entity) !System.Activator not allowed in scipt</param>
+        /// <param name="initiator">Like context.init(...)</param>
+        public static void ControlProperty(string id, Func<U, float> getter, Action<U, float> setter, Func<IMyEntity, U> constructor, Action<U> initiator)
         {
             var property = MyAPIGateway.TerminalControls.CreateProperty<float, T>(id);
             property.SupportsMultipleBlocks = true;
-            property.Getter = (block) => getter(GetContext(block, constructor));
-            property.Setter = (block, value) => setter(GetContext(block, constructor), value);
+            property.Getter = (block) => getter(GetContext(block, constructor, initiator));
+            property.Setter = (block, value) => setter(GetContext(block, constructor, initiator), value);
 
             MyAPIGateway.TerminalControls.AddControl<T>(property);
         }
+    }
+
+    public abstract class CustomPropertyContext
+    {
+        internal abstract void Update();
     }
 
     public class DeltaLimitSwitch<T> : CustomPropertyContext where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
@@ -156,13 +204,10 @@ namespace SEA.GM
         public float Value { get { return valueGetter(block); } set { this.limit = value; timeStamp = DateTime.UtcNow; enabled = true; } }
         public float Limit { get { return limit; } }
 
-        public DeltaLimitSwitch()
+        public DeltaLimitSwitch(IMyEntity entity)
         {
             IsInit = false;
-        }
-        internal override void SetBlock(IMyEntity block)
-        {
-            this.block = block as T;
+            this.block = entity as T;
         }
 
         public void Init(float maxDeltaLimit, float maxVelociy, string propertyId, Func<T, float> valueGetter, Func<T, float> deltaLimitGetter)
@@ -249,7 +294,7 @@ namespace SEA.GM
             }
             else
                 return false;
-
+              
             return true;
         }
 
@@ -269,59 +314,49 @@ namespace SEA.GM
 
         public override void UpdateAfterSimulation100()
         {
-            base.UpdateAfterSimulation100();
-
             if (!isInit)
                 return;
 
-            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges UpdateAfterSimulation100(block:" + Entity.EntityId.ToString() + ")");
-
-            foreach (var element in propertisFloat)
+            //SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges UpdateAfterSimulation100(block:" + Entity.EntityId.ToString() + ")");
+            try
             {
-                tempFloatValue = block.GetValue<float>(element.Key);
-                if (tempFloatValue == element.Value)
-                    continue;
+                foreach (var element in propertisFloat)
+                {
+                    tempFloatValue = block.GetValue<float>(element.Key);
+                    if (tempFloatValue == element.Value)
+                        continue;
 
-                propertisFloat[element.Key] = tempFloatValue;
+                    propertisFloat[element.Key] = tempFloatValue;
 
-                tempStringBuilder.Length = 0;
-                tempStringBuilder
-                    .JObjectStart()
-                    .JObjectStringKeyValuePair(
-                        "eId", block.EntityId.ToString(),
-                        "propId", element.Key,
-                        "value", tempFloatValue.ToString())
-                    .JObjectEnd();
+                    tempStringBuilder.Length = 0;
+                    tempStringBuilder
+                        .JObjectStringKeyValuePair(
+                            "eId", block.EntityId.ToString(),
+                            "propId", element.Key,
+                            "value", tempFloatValue.ToString());
 
-                doOut(1, tempStringBuilder.ToString());
+                    doOut(1, tempStringBuilder.ToString());
+                }
+
+                foreach (var element in propertisBool)
+                {
+                    tempBoolValue = block.GetValue<bool>(element.Key);
+                    if (tempBoolValue == element.Value)
+                        continue;
+
+                    propertisBool[element.Key] = tempBoolValue;
+
+                    tempStringBuilder.Length = 0;
+                    tempStringBuilder
+                        .JObjectStringKeyValuePair(
+                            "eId", block.EntityId.ToString(),
+                            "propId", element.Key,
+                            "value", tempBoolValue.ToString());
+
+                    doOut(1, tempStringBuilder.ToString());
+                }
             }
-
-            foreach (var element in propertisBool)
-            {
-                tempBoolValue = block.GetValue<bool>(element.Key);
-                if (tempBoolValue == element.Value)
-                    continue;
-
-                propertisBool[element.Key] = tempBoolValue;
-
-                tempStringBuilder.Length = 0;
-                tempStringBuilder
-                    .JObjectStart()
-                    .JObjectStringKeyValuePair(
-                        "eId", block.EntityId.ToString(),
-                        "propId", element.Key,
-                        "value", tempBoolValue.ToString())
-                    .JObjectEnd();
-
-                doOut(1, tempStringBuilder.ToString());
-            }
-        }
-
-        public override void UpdateBeforeSimulation()
-        {
-            base.UpdateBeforeSimulation();
-            //var component = this.Container.Get<MyGameLogicComponent>();
-            //component.UpdateBeforeSimulation();
+            catch { }
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
