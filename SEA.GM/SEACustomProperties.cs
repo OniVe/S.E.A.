@@ -1,14 +1,13 @@
 ﻿using Sandbox.Common.ObjectBuilders;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
+using SEA.GM.GameLogic;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using VRage.Game.Components;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
-using VRage.Game;
 
 namespace SEA.GM
 {
@@ -18,13 +17,44 @@ namespace SEA.GM
         {
             try
             {
-                MotorStatorAngleProperty.AddControlProperty<MotorStatorAngleProperty>("Virtual Angle",
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyMotorStator, DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator>>.ControlProperty("Virtual Angle",
                     (context) => MyMath.RadiansToDegrees(context.Value),
-                    (context, value) => context.Value = MyMath.DegreesToRadians(value));
+                    (context, value) => context.Value = MyMath.DegreesToRadians(value),
+                    (context) => context.Init(
+                        (float)(Math.PI / 360f), // Δ 1.0 degress
+                        4f,
+                        "Velocity",
+                        (block) => block.Angle,
+                        (block) =>
+                        {
+                            if (float.IsInfinity(block.LowerLimit) && float.IsInfinity(block.UpperLimit))
+                                return MyMath.ShortestAngle(block.Angle, context.Limit);
+                            else
+                            {
+                                if (context.Limit < block.LowerLimit) context.Value = block.LowerLimit;
+                                else if (context.Limit > block.UpperLimit) context.Value = block.UpperLimit;
 
-                PistonBasePositionProperty.AddControlProperty<PistonBasePositionProperty>("Virtual Position",
+                                return context.Limit - block.Angle;
+                            }
+                        })
+                    );
+
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyPistonBase, DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyPistonBase>>.ControlProperty("Virtual Position",
                     (context) => context.Value,
-                    (context, value) => context.Value = value);
+                    (context, value) => context.Value = value,
+                    (context) => context.Init(
+                        0.1f, // Δ 0.2 meters
+                        2f,
+                        "Velocity",
+                        (block) => block.CurrentPosition,
+                        (block) =>
+                        {
+                            if (context.Limit < block.MinLimit) context.Value = block.MinLimit;
+                            else if (context.Limit > block.MaxLimit) context.Value = block.MaxLimit;
+
+                            return context.Limit - block.CurrentPosition;
+                        })
+                    );
             }
             catch (Exception ex)
             {
@@ -33,49 +63,69 @@ namespace SEA.GM
         }
     }
 
-    public abstract class LimitProperty<T> : MyGameLogicComponent where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
+    public abstract class CustomPropertyContext
     {
-        internal bool isInit = false;
+        internal abstract void SetBlock(IMyEntity block);
+        internal abstract void Update();
+    }
+
+    public class CustomProperty<T,U> : MyGameLogicComponent where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock where U: CustomPropertyContext, new()
+    {
         internal MyObjectBuilder_EntityBase _objectBuilder;
-        internal DeltaLimitSwitch<T> context;//context should be changed to Dictionary (multiple Properties)
+        internal U context;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            if (isInit)
-                return;
-
             base.Init(objectBuilder);
-
             _objectBuilder = objectBuilder;
-
-            context = new DeltaLimitSwitch<T>(Entity);
-            isInit = this.Init();
-
-            NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
+            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
         }
-
-        public abstract bool Init();
 
         public override void UpdateBeforeSimulation()
         {
-            if (isInit)
-                context.Update();
+            SEAUtilities.Logging.Static.WriteLine("LimitProperty UpdateBeforeSimulation(block:" + Entity.EntityId.ToString() + ") T: " + this.GetType().ToString());
+            context.Update();
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
 
-        public static void AddControlProperty<U>(string id, Func<DeltaLimitSwitch<T>, float> getter, Action<DeltaLimitSwitch<T>, float> setter) where U : LimitProperty<T>
+        private static U GetContext(IMyTerminalBlock block, Action<U> constructor)
+        {
+            SEAUtilities.Logging.Static.WriteLine("GetContext (block:" + block.EntityId.ToString() + ")");
+            MyGameLogicComponent gameLogic;
+
+            if (block.GameLogic.Container.TryGet<MyGameLogicComponent>(out gameLogic) && !(gameLogic is MyNullGameLogicComponent))
+            {
+                //SEACompositeGameLogicComponent.Create(logicComponent, block);
+
+                SEAUtilities.Logging.Static.WriteLine(" GetContext success GameLogic:" + gameLogic.GetType().ToString());
+                return (gameLogic.GetAs<CustomProperty<T, U>>()).context;
+            }
+
+            SEAUtilities.Logging.Static.WriteLine("     GetContext new GameLogic...");
+
+            var logicComponent = new CustomProperty<T,U>() { context = new U() };
+            logicComponent.context.SetBlock(block);
+
+            SEACompositeGameLogicComponent.Create(logicComponent, block);
+            constructor(logicComponent.context);
+            logicComponent.Init(block.GetObjectBuilder());
+
+            return logicComponent.context;
+        }
+
+        public static void ControlProperty(string id, Func<U, float> getter, Action<U, float> setter, Action<U> constructor)
         {
             var property = MyAPIGateway.TerminalControls.CreateProperty<float, T>(id);
             property.SupportsMultipleBlocks = true;
-            property.Getter = (block) => { return getter(block.GameLogic.GetAs<U>().context); };
-            property.Setter = (block, value) => { setter(block.GameLogic.GetAs<U>().context, value); };
+            property.Getter = (block) => getter(GetContext(block, constructor));
+            property.Setter = (block, value) => setter(GetContext(block, constructor), value);
 
             MyAPIGateway.TerminalControls.AddControl<T>(property);
         }
     }
 
-    public class DeltaLimitSwitch<T> where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
+    public class DeltaLimitSwitch<T> : CustomPropertyContext where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
     {
         private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
 
@@ -90,6 +140,7 @@ namespace SEA.GM
         private Func<T, float> deltaLimitGetter;
         private DateTime timeStamp;
 
+        public bool IsInit { get; private set; }
         public bool Enabled
         {
             get
@@ -105,15 +156,19 @@ namespace SEA.GM
         public float Value { get { return valueGetter(block); } set { this.limit = value; timeStamp = DateTime.UtcNow; enabled = true; } }
         public float Limit { get { return limit; } }
 
-        public DeltaLimitSwitch(IMyEntity block)
+        public DeltaLimitSwitch()
+        {
+            IsInit = false;
+        }
+        internal override void SetBlock(IMyEntity block)
         {
             this.block = block as T;
         }
 
-        public bool Init(float maxDeltaLimit, float maxVelociy, string propertyId, Func<T, float> valueGetter, Func<T, float> deltaLimitGetter)
+        public void Init(float maxDeltaLimit, float maxVelociy, string propertyId, Func<T, float> valueGetter, Func<T, float> deltaLimitGetter)
         {
             if (block == null)
-                return false;
+                return;
 
             this.maxDeltaLimit = maxDeltaLimit;
             this.maxVelociy = maxVelociy;
@@ -125,10 +180,10 @@ namespace SEA.GM
             enabled = false;
             timeStamp = DateTime.UtcNow;
 
-            return true;
+            IsInit = true;
         }
 
-        public void Update()
+        internal override void Update()
         {
             if (!Enabled)
                 return;
@@ -151,58 +206,7 @@ namespace SEA.GM
         }
     }
 
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorStator))]
-    public class MotorStatorAngleProperty : LimitProperty<Sandbox.ModAPI.Ingame.IMyMotorStator>
-    {
-        public override bool Init()
-        {
-            return context.Init(
-                (float)(Math.PI / 360f), // Δ 1.0 degress
-                4f,
-                "Velocity",
-                (block) => block.Angle,
-                (block) =>
-                {
-                    if (float.IsInfinity(block.LowerLimit) && float.IsInfinity(block.UpperLimit))
-                        return MyMath.ShortestAngle(block.Angle, context.Limit);
-                    else
-                    {
-                        if (context.Limit < block.LowerLimit) context.Value = block.LowerLimit;
-                        else if (context.Limit > block.UpperLimit) context.Value = block.UpperLimit;
-
-                        return context.Limit - block.Angle;
-                    }
-                });
-        }
-    }
-
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_MotorAdvancedStator))]
-    public class MotorAdvancedStatorAngleProperty : MotorStatorAngleProperty { }
-
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_PistonBase))]
-    public class PistonBasePositionProperty : LimitProperty<Sandbox.ModAPI.Ingame.IMyPistonBase>
-    {
-        public override bool Init()
-        {
-            return context.Init(
-                0.1f, // Δ 0.2 meters
-                2f,
-                "Velocity",
-                (block) => block.CurrentPosition,
-                (block) =>
-                {
-                    if (context.Limit < block.MinLimit) context.Value = block.MinLimit;
-                    else if (context.Limit > block.MaxLimit) context.Value = block.MaxLimit;
-
-                    return context.Limit - block.CurrentPosition;
-                });
-        }
-    }
-
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_ExtendedPistonBase))]
-    public class ExtendedPistonBasePositionProperty : PistonBasePositionProperty { }
-
-    public class MonitorPropertyChanges : SEAGameLogicComponent
+    public class MonitorPropertyChanges : MyGameLogicComponent
     {
         internal bool isInit = false;
         internal MyObjectBuilder_EntityBase _objectBuilder;
@@ -251,25 +255,26 @@ namespace SEA.GM
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            if (isInit)
-                return;
-
             base.Init(objectBuilder);
             _objectBuilder = objectBuilder;
+
+            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges Init()");
 
             block = Entity as Sandbox.ModAPI.Ingame.IMyFunctionalBlock;
 
             isInit = true;
 
-            NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
+            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
         public override void UpdateAfterSimulation100()
         {
+            base.UpdateAfterSimulation100();
+
             if (!isInit)
                 return;
 
-            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges UpdateAfterSimulation100(block:" + block.EntityId.ToString() + ")");
+            SEAUtilities.Logging.Static.WriteLine("MonitorPropertyChanges UpdateAfterSimulation100(block:" + Entity.EntityId.ToString() + ")");
 
             foreach (var element in propertisFloat)
             {
@@ -312,100 +317,13 @@ namespace SEA.GM
             }
         }
 
+        public override void UpdateBeforeSimulation()
+        {
+            base.UpdateBeforeSimulation();
+            //var component = this.Container.Get<MyGameLogicComponent>();
+            //component.UpdateBeforeSimulation();
+        }
+
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
-    }
-
-
-    public abstract class SEAGameLogicComponent : MyEntityComponentBase
-    {
-        public MyEntityUpdateEnum NeedsUpdate
-        {
-            get
-            {
-                MyEntityUpdateEnum needsUpdate = MyEntityUpdateEnum.NONE;
-
-                if ((Container.Entity.Flags & EntityFlags.NeedsUpdate) != 0)
-                    needsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
-
-                if ((Container.Entity.Flags & EntityFlags.NeedsUpdate10) != 0)
-                    needsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;
-
-                if ((Container.Entity.Flags & EntityFlags.NeedsUpdate100) != 0)
-                    needsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
-
-                if ((Container.Entity.Flags & EntityFlags.NeedsUpdateBeforeNextFrame) != 0)
-                    needsUpdate |= MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
-
-                return needsUpdate;
-            }
-            set
-            {
-                bool hasChanged = value != NeedsUpdate;
-
-                if (hasChanged)
-                {
-                    if (Container.Entity.InScene)
-                        MyAPIGatewayShortcuts.UnregisterEntityUpdate(Container.Entity, false);
-
-                    Container.Entity.Flags &= ~EntityFlags.NeedsUpdateBeforeNextFrame;
-                    Container.Entity.Flags &= ~EntityFlags.NeedsUpdate;
-                    Container.Entity.Flags &= ~EntityFlags.NeedsUpdate10;
-                    Container.Entity.Flags &= ~EntityFlags.NeedsUpdate100;
-
-                    if ((value & MyEntityUpdateEnum.BEFORE_NEXT_FRAME) != 0)
-                        Container.Entity.Flags |= EntityFlags.NeedsUpdateBeforeNextFrame;
-                    if ((value & MyEntityUpdateEnum.EACH_FRAME) != 0)
-                        Container.Entity.Flags |= EntityFlags.NeedsUpdate;
-                    if ((value & MyEntityUpdateEnum.EACH_10TH_FRAME) != 0)
-                        Container.Entity.Flags |= EntityFlags.NeedsUpdate10;
-                    if ((value & MyEntityUpdateEnum.EACH_100TH_FRAME) != 0)
-                        Container.Entity.Flags |= EntityFlags.NeedsUpdate100;
-
-                    if (Container.Entity.InScene)
-                        MyAPIGatewayShortcuts.RegisterEntityUpdate(Container.Entity);
-                }
-            }
-        }
-
-        [System.Xml.Serialization.XmlIgnore]
-        public bool Closed { get; protected set; }
-        [System.Xml.Serialization.XmlIgnore]
-        public bool MarkedForClose { get; protected set; }
-        //Called after internal implementation
-        public virtual void UpdateOnceBeforeFrame()
-        { }
-        public virtual void UpdateBeforeSimulation()
-        { }
-        public virtual void UpdateBeforeSimulation10()
-        { }
-        public virtual void UpdateBeforeSimulation100()
-        { }
-        public virtual void UpdateAfterSimulation()
-        { }
-        public virtual void UpdateAfterSimulation10()
-        { }
-        public virtual void UpdateAfterSimulation100()
-        { }
-        public virtual void UpdatingStopped()
-        { }
-
-        //Entities are usualy initialized from builder immediately after creation by factory
-        public virtual void Init(MyObjectBuilder_EntityBase objectBuilder)
-        { }
-        public abstract MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false);
-
-        //Only use for setting flags, no heavy logic or cleanup
-        public virtual void MarkForClose()
-        { }
-
-        //Called before internal implementation
-        //Cleanup here
-        public virtual void Close()
-        { }
-
-        public override string ComponentTypeDebugString
-        {
-            get { return "SEA Game Logic"; }
-        }
     }
 }

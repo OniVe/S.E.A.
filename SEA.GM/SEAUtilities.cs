@@ -297,14 +297,14 @@ namespace SEA.GM
                 .Append("Exception occured: ")
                 .Append(ex.TargetSite)
                 .Append(": ")
-                .Append(ex.Message)
+                .AppendLine(ex.Message)
                 .AppendLine(ex.StackTrace);
 
             if (ex.InnerException != null)
                 errorMsg.AppendLine("Inner exception: ")
                     .Append(ex.InnerException.TargetSite)
                     .Append(": ")
-                    .Append(ex.InnerException.Message)
+                    .AppendLine(ex.InnerException.Message)
                     .AppendLine(ex.InnerException.StackTrace);
 
             return errorMsg.ToString();

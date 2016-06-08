@@ -64,6 +64,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SEABase.cs" />
+    <Compile Include="SEACompositeGameLogicComponent.cs" />
     <Compile Include="SEAContext.cs" />
     <Compile Include="SEACustomProperties.cs" />
     <Compile Include="SEASessionManager.cs" />

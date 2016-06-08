@@ -320,42 +320,27 @@ namespace SEA.GM.Managers
 
         public bool TrackBlockValue(long entityId, string propertyId)
         {
-            SEAUtilities.Logging.Static.WriteLine("TrackBlockValue(entityId:" + entityId.ToString() + ", propertyId:" + propertyId + ")");
+            /*SEAUtilities.Logging.Static.WriteLine("TrackBlockValue(entityId:" + entityId.ToString() + ", propertyId:" + propertyId + ")");
             var block = GetTerminalBlock(entityId);
             if (block == null)
                 return false;
 
-
-            SEAUtilities.Logging.Static.WriteLine(" GameLogic Types:");
-            foreach (var type in block.GameLogic.Container)
-                SEAUtilities.Logging.Static.WriteLine("     " + type.GetType().ToString());
-
-            SEAUtilities.Logging.Static.WriteLine(" GameLogic ComponentTypes:");
-            foreach (var type in block.GameLogic.Container.GetComponentTypes())
-                SEAUtilities.Logging.Static.WriteLine("     " + type.ToString());
-
-            var monitor = block.GameLogic.GetAs<MonitorPropertyChanges>();//MonitorPropertyChanges
-            if (monitor == null)
+            MonitorPropertyChanges monitor;
+            if (!block.GameLogic.Container.TryGet<MonitorPropertyChanges>(out monitor))
             {
-                SEAUtilities.Logging.Static.WriteLine("TrackBlockValue monitor is null");
-
                 monitor = new MonitorPropertyChanges(doOut);
-                block.GameLogic.Container.Add(typeof(MonitorPropertyChanges), monitor);
+                block.GameLogic = monitor;//.Container.Add<MonitorPropertyChanges>(monitor);
                 monitor.Init(block.GetObjectBuilder());
-
-                //SEAUtilities.Logging.Static.WriteLine("TrackBlockValue try Init");
-                //if (!monitor.Initialize(block.GetObjectBuilder()))
-                //return false;
             }
 
-            SEAUtilities.Logging.Static.WriteLine(" GameLogic Types:");
-            foreach (var type in block.GameLogic.Container)
-                SEAUtilities.Logging.Static.WriteLine("     " + type.GetType().ToString());
+            SEAUtilities.Logging.Static.WriteLine(" Types:");
+            foreach (var e in block.GameLogic.Container.GetComponentTypes())
+                SEAUtilities.Logging.Static.WriteLine("     " + e.ToString());
 
-            SEAUtilities.Logging.Static.WriteLine(" GameLogic ComponentTypes:");
-            foreach (var type in block.GameLogic.Container.GetComponentTypes())
-                SEAUtilities.Logging.Static.WriteLine("     " + type.ToString());
-
+            SEAUtilities.Logging.Static.WriteLine(" Full Types:");
+            foreach (var e in block.GameLogic.Container)
+                SEAUtilities.Logging.Static.WriteLine("     " + e.GetType().ToString());
+                */
             return true;
 
 
