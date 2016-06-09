@@ -3,11 +3,11 @@ using Sandbox.ModAPI.Interfaces;
 using SEA.GM.GameLogic;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using VRage.Game.Components;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
-using System.Linq;
 
 namespace SEA.GM
 {
@@ -245,8 +245,8 @@ namespace SEA.GM
             }
         }
     }
-
-    public class MonitorPropertyChanges : MyGameLogicComponent
+    
+    public class PropertyValueTracking : MyGameLogicComponent
     {
         private bool isInit = false;
         internal MyObjectBuilder_EntityBase _objectBuilder;
@@ -259,8 +259,9 @@ namespace SEA.GM
         private StringBuilder tempStringBuilder = new StringBuilder();
 
         internal Action<uint, string, IList<string>> doOut;
+        public bool IsEmpty { get { return propertisFloat.Count == 0 && propertisBool.Count == 0; } }
 
-        public MonitorPropertyChanges(Action<uint, string, IList<string>> doOut)
+        public PropertyValueTracking(Action<uint, string, IList<string>> doOut)
         {
             this.doOut = doOut;
         }
@@ -289,6 +290,35 @@ namespace SEA.GM
                 return false;
 
             return true;
+        }
+
+        internal void Remove(string connectionId)
+        {
+            foreach(var element in propertisFloat.Where(e => e.Value.Clients.Contains(connectionId)).ToArray())
+                if (element.Value.Clients.Count == 1)
+                    propertisFloat.Remove(element.Key);
+                else
+                    element.Value.Clients.Remove(connectionId);
+
+            foreach (var element in propertisBool.Where(e => e.Value.Clients.Contains(connectionId)).ToArray())
+                if (element.Value.Clients.Count == 1)
+                    propertisFloat.Remove(element.Key);
+                else
+                    element.Value.Clients.Remove(connectionId);
+        }
+        internal void Remove(string connectionId, string propertyId)
+        {
+            foreach (var element in propertisFloat.Where(e => e.Key == propertyId && e.Value.Clients.Contains(connectionId)).ToArray())
+                if (element.Value.Clients.Count == 1)
+                    propertisFloat.Remove(element.Key);
+                else
+                    element.Value.Clients.Remove(connectionId);
+
+            foreach (var element in propertisBool.Where(e => e.Key == propertyId && e.Value.Clients.Contains(connectionId)).ToArray())
+                if (element.Value.Clients.Count == 1)
+                    propertisFloat.Remove(element.Key);
+                else
+                    element.Value.Clients.Remove(connectionId);
         }
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)

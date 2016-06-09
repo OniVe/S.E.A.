@@ -7,7 +7,7 @@ namespace SEA.GM.GameLogic
 {
     class SEACompositeGameLogicComponent : MyGameLogicComponent
     {
-        private ICollection<MyGameLogicComponent> m_logicComponents;
+        private HashSet<MyGameLogicComponent> m_logicComponents;
 
         public SEACompositeGameLogicComponent(IMyEntity entity)
         {
@@ -18,6 +18,12 @@ namespace SEA.GM.GameLogic
         {
             logicComponent.SetContainer(Entity.Components);
             m_logicComponents.Add(logicComponent);
+        }
+
+        public void Remove(MyGameLogicComponent logicComponent)
+        {
+            logicComponent.Close();
+            m_logicComponents.Remove(logicComponent);
         }
 
         public override void UpdateOnceBeforeFrame()

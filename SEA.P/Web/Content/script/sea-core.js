@@ -117,7 +117,7 @@ var Hub = (function (){
 				},
                 getGroupBlocks         : function ( gridId, groupName )   { return seaHub.server.doAsync(3 , Utilities.tryStringifyJSON( {gridId: gridId, groupName: groupName} )).pipe(Utilities.tryParseJSON); },
                 addValueTracking       : function ( eId, property)        { return seaHub.server.doAsync(41, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);},
-			    removeValueTracking    : function ( eId, property)        { return seaHub.server.doAsync(42, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);}
+                removeValueTracking    : function ( /*eId, property*/)    { return seaHub.server.doAsync(42, Utilities.tryStringifyJSON( arguments.length === 2 ? {connId: connectionId, eId: arguments[0], propId: arguments[1]} : {connId: connectionId, eId: arguments[0]})).pipe(Utilities.tryParseJSON);}
 			},
 			errorCodeString: function ( code ){
 				
@@ -134,15 +134,17 @@ var Hub = (function (){
     //Client
 
     algorithms = [
-    function (obj){/*Func 0 - ! RESERVED !*/
+    function ( obj ){/*Func 0 - ! RESERVED !*/
 
         self.Callbacks.onChangeSessionStatus.fire(statusString[0]);
     },
-    function (obj) {/*Func 1 - ! RESERVED !*/
+    function ( obj ){/*Func 1 - ! RESERVED !*/
+
+        if (!obj) return;
 
         console.log(obj);
     }];
-    seaHub.client.doAsync = function (id, value) {
+    seaHub.client.doAsync = function (id, value){
         
         var func = algorithms[id];
         if (func === undefined)
@@ -151,15 +153,15 @@ var Hub = (function (){
         func(Utilities.tryParseJSON(value));
     };
 
-    seaHub.client.onWorldAdd = function ( value ){ };
-    seaHub.client.onWorldUpdate = function (value) { };
-    seaHub.client.onWorldDelete = function (id) { };
-    seaHub.client.onGridAdd = function (value) { };
-    seaHub.client.onGridUpdate = function (value) { };
-    seaHub.client.onGridDelete = function (id) { };
-    seaHub.client.onControlAdd = function (value) { };
-    seaHub.client.onControlUpdate = function (value) { };
-    seaHub.client.onControlDelete = function (id) { };
+    seaHub.client.onWorldAdd        = function ( value ){ };
+    seaHub.client.onWorldUpdate     = function ( value ){ };
+    seaHub.client.onWorldDelete     = function ( id )   { };
+    seaHub.client.onGridAdd         = function ( value ){ };
+    seaHub.client.onGridUpdate      = function ( value ){ };
+    seaHub.client.onGridDelete      = function ( id )   { };
+    seaHub.client.onControlAdd      = function ( value ){ };
+    seaHub.client.onControlUpdate   = function ( value ){ };
+    seaHub.client.onControlDelete   = function (id )    { };
 
     seaHub.client.onTransmit = function ( value ){
 
@@ -192,17 +194,17 @@ var Hub = (function (){
 	hub.reconnecting( function (){
 		online = false;
         self.Callbacks.onChangeHubStatus.fire(statusString[2]);
-    })
+    });
     hub.reconnected( function (){
 		online = true;
         self.Callbacks.onChangeHubStatus.fire(statusString[1]);
 		seaHub.server.connectToGameSession();
-    })
+    });
     hub.disconnected( function ( id ){
 		online = false;
 		self.Callbacks.onChangeHubStatus.fire(statusString[0]);
 		self.Callbacks.onChangeSessionStatus.fire(statusString[0]);
-    })
+    });
 	
 	return self;
 }());

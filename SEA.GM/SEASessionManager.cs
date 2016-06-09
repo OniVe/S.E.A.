@@ -326,16 +326,55 @@ namespace SEA.GM.Managers
 
             var entityGameLogic = GameLogic.SEACompositeGameLogicComponent.Get(block);
 
-            MonitorPropertyChanges component;
-            component = entityGameLogic.GetAs<MonitorPropertyChanges>();
+            PropertyValueTracking component;
+            component = entityGameLogic.GetAs<PropertyValueTracking>();
             if (component == null)
             {
-                component = new MonitorPropertyChanges(doOut);
+                component = new PropertyValueTracking(doOut);
                 entityGameLogic.Add(component);
                 component.Init(block.GetObjectBuilder());
             }
 
             return component.Add(connectionId, propertyId);
+        }
+
+        public bool RemoveValueTracking(long entityId, string propertyId, string connectionId)
+        {
+            var block = GetTerminalBlock(entityId);
+            if (block == null)
+                return false;
+
+            var entityGameLogic = GameLogic.SEACompositeGameLogicComponent.Get(block);
+
+            PropertyValueTracking component;
+            component = entityGameLogic.GetAs<PropertyValueTracking>();
+            if (component != null)
+            {
+                component.Remove(connectionId, propertyId);
+                if (component.IsEmpty)
+                    entityGameLogic.Remove(component);
+            }
+
+            return true;
+        }
+        public bool RemoveValueTracking(long entityId, string connectionId)
+        {
+            var block = GetTerminalBlock(entityId);
+            if (block == null)
+                return false;
+
+            var entityGameLogic = GameLogic.SEACompositeGameLogicComponent.Get(block);
+
+            PropertyValueTracking component;
+            component = entityGameLogic.GetAs<PropertyValueTracking>();
+            if (component != null)
+            {
+                component.Remove(connectionId);
+                if (component.IsEmpty)
+                    entityGameLogic.Remove(component);
+            }
+
+            return true;
         }
 
         public Hashtable GetValueColor(long entityId, string propertyId)

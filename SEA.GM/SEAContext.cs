@@ -44,7 +44,6 @@ namespace SEA.GM.Context
 
                 { 41 , new Algorithm(AddValueTracking) },
                 { 42 , new Algorithm(RemoveValueTracking) },
-                { 43 , new Algorithm(RemoveAllTracking) },
             };
             #endregion
 
@@ -294,39 +293,31 @@ namespace SEA.GM.Context
         }
         private object RemoveValueTracking(object value)
         {
-            /*if (value is Hashtable)
+            if (value is Hashtable)
             {
                 var _value = (Hashtable)value;
-                EntityKey entityKey;
-                if (_value.ContainsKey("eId") &&
-                    _value.ContainsKey("propId") &&
-                    TryParseEntityId(_value["eId"], out entityKey))
+                if (_value.ContainsKey("connId"))
                 {
-                    return entityKey.IsGroup ?
-                        false :
-                        sessionManager.AddValueTracking(entityKey.EntityId, (string)_value["propId"]);
+                    EntityKey entityKey;
+                    if (_value.ContainsKey("eId") && _value.ContainsKey("propId"))
+                    {
+                        if (TryParseEntityId(_value["eId"], out entityKey))
+                            return entityKey.IsGroup ?
+                                false :
+                                sessionManager.RemoveValueTracking(entityKey.EntityId, (string)_value["propId"], (string)_value["connId"]);
+                    }
+                    else if (_value.ContainsKey("eId"))
+                    {
+                        if (TryParseEntityId(_value["eId"], out entityKey))
+                            return entityKey.IsGroup ?
+                                false :
+                                sessionManager.RemoveValueTracking(entityKey.EntityId, (string)_value["connId"]);
+                    }
                 }
-            }*/
+            }
             return null;
         }
-        private object RemoveAllTracking(object value)
-        {
-            /*if (value is Hashtable)
-            {
-                var _value = (Hashtable)value;
-                EntityKey entityKey;
-                if (_value.ContainsKey("eId") &&
-                    _value.ContainsKey("propId") &&
-                    TryParseEntityId(_value["eId"], out entityKey))
-                {
-                    return entityKey.IsGroup ?
-                        false :
-                        sessionManager.AddBlockValueTracking(entityKey.EntityId, (string)_value["propId"]);
-                }
-            }*/
-            return null;
-        }
-        
+
         private object GetValueBool(object value)
         {
             if (value is Hashtable)
