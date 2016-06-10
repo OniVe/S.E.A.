@@ -16,14 +16,20 @@ namespace SEA.GM.GameLogic
 
         public void Add(MyGameLogicComponent logicComponent)
         {
-            logicComponent.SetContainer(Entity.Components);
-            m_logicComponents.Add(logicComponent);
+            if (!m_logicComponents.Contains(logicComponent))
+            {
+                logicComponent.SetContainer(Entity.Components);
+                m_logicComponents.Add(logicComponent);
+            }
         }
 
         public void Remove(MyGameLogicComponent logicComponent)
         {
-            logicComponent.Close();
-            m_logicComponents.Remove(logicComponent);
+            if (m_logicComponents.Contains(logicComponent))
+            {
+                logicComponent.Close();
+                m_logicComponents.Remove(logicComponent);
+            }
         }
 
         public override void UpdateOnceBeforeFrame()
@@ -46,7 +52,6 @@ namespace SEA.GM.GameLogic
 
         public override void UpdateBeforeSimulation100()
         {
-
             foreach (var component in m_logicComponents)
                 component.UpdateBeforeSimulation100();
         }
@@ -109,33 +114,23 @@ namespace SEA.GM.GameLogic
 
         public static SEACompositeGameLogicComponent Get(IMyEntity entity)
         {
-            MyGameLogicComponent gameLogic;
+            MyGameLogicComponent component;
 
-            if (entity.GameLogic.Container.TryGet<MyGameLogicComponent>(out gameLogic) && !(gameLogic is MyNullGameLogicComponent))
-                if (gameLogic is SEACompositeGameLogicComponent)
-                    return (SEACompositeGameLogicComponent)gameLogic;
+            if (entity.GameLogic.Container.TryGet<MyGameLogicComponent>(out component) && !(component is MyNullGameLogicComponent))
+                if (component is SEACompositeGameLogicComponent)
+                    return (SEACompositeGameLogicComponent)component;
                 else
                 {
-                    var new_gameLogic = new SEACompositeGameLogicComponent(entity);
-                    new_gameLogic.Add(gameLogic);
-                    entity.GameLogic.Container.Add<MyGameLogicComponent>(new_gameLogic);
-                    return (SEACompositeGameLogicComponent)new_gameLogic;
+                    var new_component = new SEACompositeGameLogicComponent(entity);
+                    new_component.Add(component);
+                    entity.GameLogic.Container.Add<MyGameLogicComponent>(new_component);
+                    return (SEACompositeGameLogicComponent)new_component;
                 }
 
-            gameLogic = new SEACompositeGameLogicComponent(entity);
-            entity.GameLogic.Container.Add<MyGameLogicComponent>(gameLogic);
+            component = new SEACompositeGameLogicComponent(entity);
+            entity.GameLogic.Container.Add<MyGameLogicComponent>(component);
 
-            return (SEACompositeGameLogicComponent)gameLogic;
-
-            /*            
-            SEAUtilities.Logging.Static.WriteLine(" Types:");
-            foreach (var e in entity.GameLogic.Container.GetComponentTypes())
-                SEAUtilities.Logging.Static.WriteLine("     " + e.ToString());
-
-            SEAUtilities.Logging.Static.WriteLine(" Full Types:");
-            foreach (var e in entity.GameLogic.Container)
-                SEAUtilities.Logging.Static.WriteLine("     " + e.GetType().ToString());
-            */
+            return (SEACompositeGameLogicComponent)component;
         }
     }
 }

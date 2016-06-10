@@ -333,16 +333,17 @@ $.widget( "controlunit.sea_button", $.sea_ui.controlunit, {
 $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 	version: "1.1.0",
 	options: {
-	    valueLabel  : 0,
-        width       : 35,
-		height      : 70,
-		property    : "",
+	    valueLabel   : 0,
+        width        : 35,
+		height       : 70,
+		property     : "",
 	    //inverse     : false,
-		value       : 0,
-		roundValue  : false,
-		minValue    : 0,
-		maxValue    : 100,
-		defaultValue: 0
+		value        : 0,
+		roundValue   : false,
+		minValue     : 0,
+		maxValue     : 100,
+		defaultValue : 0,
+		externalValue: null
 	},
 	_minLength: 70,
 	
@@ -398,7 +399,7 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 				if(this._positionToValue()){
 
 				    this._do();
-				    this.setValueLabel(this.options.value);
+				    this.setValueLabel(this.options.value + " / " + this.options.externalValue);
 				}
 			}
 		}, this);
@@ -408,7 +409,8 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 		}, this);
 		
 		this._valueToPosition();
-        this._syncValue();
+		this._externalValueUpdate = $.proxy(this._externalValueUpdate, this);
+		this._syncValue();
         
 		this._on( this.element, {
 			"touchstart .track": "_touchStart",
@@ -440,11 +442,16 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
             if(_value !== value)
                 self._do();
 
-            self.setValueLabel(self.options.value);
+            self.setValueLabel(self.options.value + " / " + self.options.externalValue);
             self._valueToPosition();
         });
 
-        Hub.Game.trackBlockValue(self.options.eId, self.options.property);
+        Hub.Game.addValueTracking(this.options.eId, this.options.property, this._externalValueUpdate);
+    },
+    _externalValueUpdate: function (value) {
+
+    	this.options.externalValue = value;
+    	this.setValueLabel(this.options.value + " / " + this.options.externalValue);
     },
 	_touchStart: function ( event ){
 		
@@ -492,7 +499,7 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 		this.options.value = this.options.defaultValue;
 		this._valueToPosition();
 		this._do();
-		this.setValueLabel(this.options.value);
+		this.setValueLabel(this.options.value + " / " + this.options.externalValue);
 	},
 	_positionToValue: function (){
 		

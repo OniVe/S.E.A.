@@ -34,6 +34,7 @@ var Hub = (function (){
 		online = false,
 		statusString = ["offline", "online", "standby"],
         algorithms,
+        propertyValueTracking,
 		self = {
 			online: function (){ return online; },
 			start: function (){
@@ -116,8 +117,8 @@ var Hub = (function (){
 					getAll : function ( gridId ){ return seaHub.server.doAsync(2, Utilities.tryStringifyJSON(gridId)).pipe(Utilities.tryParseJSON); }
 				},
                 getGroupBlocks         : function ( gridId, groupName )   { return seaHub.server.doAsync(3 , Utilities.tryStringifyJSON( {gridId: gridId, groupName: groupName} )).pipe(Utilities.tryParseJSON); },
-                addValueTracking       : function ( eId, property)        { return seaHub.server.doAsync(41, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);},
-                removeValueTracking    : function ( /*eId, property*/)    { return seaHub.server.doAsync(42, Utilities.tryStringifyJSON( arguments.length === 2 ? {connId: connectionId, eId: arguments[0], propId: arguments[1]} : {connId: connectionId, eId: arguments[0]})).pipe(Utilities.tryParseJSON);}
+                addValueTracking       : function ( eId, property, func ) { return propertyValueTracking.add(eId, property, func); },
+                removeValueTracking    : function ( /*eId, property, func*/)    { return propertyValueTracking(eId, property, func); }
 			},
 			errorCodeString: function ( code ){
 				
@@ -140,17 +141,93 @@ var Hub = (function (){
     },
     function ( obj ){/*Func 1 - ! RESERVED !*/
 
-        if (!obj) return;
+        if (obj)
+			propertyValueTracking.fire(obj);
 
-        console.log(obj);
+    	//console.log(obj);
     }];
+
+    propertyValueTracking = {
+    	_entities			: {},
+    	_getEntityKey		: function ( eId ){
+
+    		return typeof (eId) === "string" ? eId : Utilities.tryStringifyJSON(eId);
+    	},
+    	_getEntityCallbacks	: function ( eId ){
+    		
+    		return this._entities[this._getEntityKey(eId)];
+    	},
+    	_getCallback		: function ( eId, property, create ){
+    		
+    		var _eId = this._getEntityKey(eId),
+				callbacks = this._entities[_eId];
+
+    		if (!callbacks)
+    			if (create)
+    				this._entities[_eId] = callbacks = {};
+    			else
+    				return null;
+				
+    		var callback = callbacks[property];
+
+    		if (!callback)
+    			if (create)
+    				callbacks[property] = callback = $.Callbacks("unique memory");
+    			else
+    				return null;
+
+    		return callback;
+    	},
+        add		: function ( eId, property, func ){
+
+        	if ($.type(func) !== "function" || !property || !eId) return;
+
+        	this._getCallback(eId, property, true).add(func);
+
+			return seaHub.server.doAsync(41, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);
+        },
+        remove	: function ( /*eId, property, func*/ ){
+
+        	switch (arguments.length) {
+        		case 3:
+
+        			var callback = _getCallback(arguments[0], arguments[1], false);
+        			if (callback)
+        				callback.remove(arguments[2]);
+
+        			break;
+        		case 2:
+
+        			var callbacks = _getEntityCallbacks(arguments[0]);
+        			if (callbacks)
+        				delete callbacks[arguments[1]];
+
+        			seaHub.server.doAsync(42, Utilities.tryStringifyJSON({ connId: connectionId, eId: arguments[0], propId: arguments[1] })).pipe(Utilities.tryParseJSON);
+        			break;
+        		case 1:
+
+        			delete _entities[this._getEntityKey(arguments[0])];
+
+        			seaHub.server.doAsync(42, Utilities.tryStringifyJSON({ connId: connectionId, eId: arguments[0] })).pipe(Utilities.tryParseJSON);
+        			break;
+        	}
+        },
+        fire	: function ( eId, property, value ){
+			
+        	var callback;
+        	switch (arguments.length){
+        		case 1: callback = this._getCallback(eId.eId, eId.propId, false); if (callback) callback.fire(eId.value); return;
+        		case 3: callback = this._getCallback(eId, property, false); if (callback) callback.fire(value); return;
+        	}
+        }
+    };
+
     seaHub.client.doAsync = function (id, value){
         
         var func = algorithms[id];
-        if (func === undefined)
-            return;
 
-        func(Utilities.tryParseJSON(value));
+        if (func)
+			func(Utilities.tryParseJSON(value));
     };
 
     seaHub.client.onWorldAdd        = function ( value ){ };
@@ -205,6 +282,6 @@ var Hub = (function (){
 		self.Callbacks.onChangeHubStatus.fire(statusString[0]);
 		self.Callbacks.onChangeSessionStatus.fire(statusString[0]);
     });
-	
+	 
 	return self;
 }());

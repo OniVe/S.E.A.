@@ -102,46 +102,6 @@ namespace SEA.GM
             component.Init(entity.GetObjectBuilder());
 
             return component.context;
-
-            /*SEAUtilities.Logging.Static.WriteLine("GetContext (block:" + entity.EntityId.ToString() + ")");
-            MyGameLogicComponent gameLogic;
-            CustomProperty<T, U> component;
-
-            if (entity.GameLogic.Container.TryGet<MyGameLogicComponent>(out gameLogic) && !(gameLogic is MyNullGameLogicComponent))
-            {
-                SEAUtilities.Logging.Static.WriteLine(" GetContext is GameLogic:" + gameLogic.GetType().ToString());
-                if (gameLogic is SEACompositeGameLogicComponent)
-                {
-                    SEAUtilities.Logging.Static.WriteLine(" GetContext GameLogic is SEACompositeGameLogicComponent");
-                    component = gameLogic.GetAs<CustomProperty<T, U>>();
-                    if (component != null)
-                        return component.context;
-                }
-            }
-            else
-            {
-                gameLogic = new SEACompositeGameLogicComponent(entity);
-                SEAUtilities.Logging.Static.WriteLine(" GetContext new SEACompositeGameLogicComponent");
-                entity.GameLogic.Container.Add<MyGameLogicComponent>(gameLogic);
-            }
-
-            SEAUtilities.Logging.Static.WriteLine(" Types:");
-            foreach (var e in entity.GameLogic.Container.GetComponentTypes())
-                SEAUtilities.Logging.Static.WriteLine("     " + e.ToString());
-
-            SEAUtilities.Logging.Static.WriteLine(" Full Types:");
-            foreach (var e in entity.GameLogic.Container)
-                SEAUtilities.Logging.Static.WriteLine("     " + e.GetType().ToString());
-
-            SEAUtilities.Logging.Static.WriteLine(" GetContext Component Add to Container");
-            component = new CustomProperty<T, U>() { context = constructor(entity) };
-
-            ((SEACompositeGameLogicComponent)gameLogic).Add(component);
-
-            initiator(component.context);
-            component.Init(entity.GetObjectBuilder());
-
-            return component.context;*/
         }
 
         /// <summary>
@@ -245,152 +205,136 @@ namespace SEA.GM
             }
         }
     }
-    
+
     public class PropertyValueTracking : MyGameLogicComponent
     {
         private bool isInit = false;
-        internal MyObjectBuilder_EntityBase _objectBuilder;
+        private byte frameCounter = 0;
+        private MyObjectBuilder_EntityBase _objectBuilder;
 
+        private string entityId;
         private Sandbox.ModAPI.Ingame.IMyFunctionalBlock block;
 
-        private Dictionary<string, Context<float>> propertisFloat = new Dictionary<string, Context<float>>();
-        private Dictionary<string, Context<bool>> propertisBool = new Dictionary<string, Context<bool>>();
+        private Dictionary<string, IContext> propertis;
 
-        private StringBuilder tempStringBuilder = new StringBuilder();
+        private StringBuilder tempStringBuilder;
 
-        internal Action<uint, string, IList<string>> doOut;
-        public bool IsEmpty { get { return propertisFloat.Count == 0 && propertisBool.Count == 0; } }
+        private Action<uint, string, IList<string>> doOut;
+        public bool IsEmpty { get { return propertis.Count == 0; } }
 
         public PropertyValueTracking(Action<uint, string, IList<string>> doOut)
         {
             this.doOut = doOut;
         }
 
-        internal bool Add(string connectionId, string propertyId)
+        public bool Add(string connectionId, string propertyId)
         {
             var property = block.GetProperty(propertyId);
             if (property == null)
                 return false;
 
-            if (property.Is<float>())
-            {
-                if (propertisFloat.ContainsKey(propertyId))
-                    return propertisFloat[propertyId].Clients.Add(connectionId);
-                else
-                    propertisFloat.Add(propertyId, new Context<float>(connectionId) { Value = block.GetValue<float>(propertyId) });
-            }
-            else if (property.Is<bool>())
-            {
-                if (propertisBool.ContainsKey(propertyId))
-                    return propertisBool[propertyId].Clients.Add(connectionId);
-                else
-                    propertisBool.Add(propertyId, new Context<bool>(connectionId) { Value = block.GetValue<bool>(propertyId) });
-            }
+            if (propertis.ContainsKey(propertyId))
+                return propertis[propertyId].Clients.Add(connectionId);
             else
-                return false;
-
+            {
+                if (property.Is<float>())
+                    propertis.Add(propertyId, new Context<float>(block, propertyId, connectionId));
+                else if (property.Is<bool>())
+                    propertis.Add(propertyId, new Context<bool>(block, propertyId, connectionId));
+                else
+                    return false;
+            }
             return true;
         }
 
-        internal void Remove(string connectionId)
+        public void Remove(string connectionId)
         {
-            foreach(var element in propertisFloat.Where(e => e.Value.Clients.Contains(connectionId)).ToArray())
+            foreach (var element in propertis.Where(e => e.Value.Clients.Contains(connectionId)).ToArray())
                 if (element.Value.Clients.Count == 1)
-                    propertisFloat.Remove(element.Key);
-                else
-                    element.Value.Clients.Remove(connectionId);
-
-            foreach (var element in propertisBool.Where(e => e.Value.Clients.Contains(connectionId)).ToArray())
-                if (element.Value.Clients.Count == 1)
-                    propertisFloat.Remove(element.Key);
+                    propertis.Remove(element.Key);
                 else
                     element.Value.Clients.Remove(connectionId);
         }
-        internal void Remove(string connectionId, string propertyId)
+        public void Remove(string connectionId, string propertyId)
         {
-            foreach (var element in propertisFloat.Where(e => e.Key == propertyId && e.Value.Clients.Contains(connectionId)).ToArray())
+            foreach (var element in propertis.Where(e => e.Key == propertyId && e.Value.Clients.Contains(connectionId)).ToArray())
                 if (element.Value.Clients.Count == 1)
-                    propertisFloat.Remove(element.Key);
-                else
-                    element.Value.Clients.Remove(connectionId);
-
-            foreach (var element in propertisBool.Where(e => e.Key == propertyId && e.Value.Clients.Contains(connectionId)).ToArray())
-                if (element.Value.Clients.Count == 1)
-                    propertisFloat.Remove(element.Key);
+                    propertis.Remove(element.Key);
                 else
                     element.Value.Clients.Remove(connectionId);
         }
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            base.Init(objectBuilder);
             _objectBuilder = objectBuilder;
 
             block = Entity as Sandbox.ModAPI.Ingame.IMyFunctionalBlock;
+            entityId = block.EntityId.ToString();
+
+            tempStringBuilder = new StringBuilder(96);
+            propertis = new Dictionary<string, IContext>();
 
             isInit = true;
 
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;
+            //Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;//Why does not work on all blocks?? (Or is triggered once)
+            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
         }
 
-        public override void UpdateAfterSimulation10()
+        public override void UpdateAfterSimulation()
         {
             if (!isInit)
                 return;
 
-            try
+            if (frameCounter == 0)
             {
-                foreach (var element in propertisFloat)
+                frameCounter = 19;
+
+                try
                 {
-                    if(!element.Value.Change(block.GetValue<float>(element.Key)))
-                        continue;
-
-                    tempStringBuilder.Length = 0;
-                    tempStringBuilder
-                        .JObjectStringKeyValuePair(
-                            "eId", block.EntityId.ToString(),
-                            "propId", element.Key,
-                            "value", element.Value.ToString());
-
-                    doOut(1, tempStringBuilder.ToString(), element.Value.Clients.ToArray());
+                    foreach (var element in propertis.Values)
+                        if (element.ValueChange(block))
+                        {
+                            tempStringBuilder.Length = 0;
+                            doOut(1,
+                                tempStringBuilder.JObjectStringKeyValuePair(
+                                    "eId", entityId,
+                                    "propId", element.propertyId,
+                                    "value", element.ToString()).ToString(),
+                                element.Clients.ToArray());
+                        }
                 }
-
-                foreach (var element in propertisBool)
-                {
-                    if (!element.Value.Change(block.GetValue<bool>(element.Key)))
-                        continue;
-
-                    tempStringBuilder.Length = 0;
-                    tempStringBuilder
-                        .JObjectStringKeyValuePair(
-                            "eId", block.EntityId.ToString(),
-                            "propId", element.Key,
-                            "value", element.Value.ToString());
-
-                    doOut(1, tempStringBuilder.ToString(), element.Value.Clients.ToArray());
-                }
+                catch { }
             }
-            catch { }
+            else
+                frameCounter--;
         }
 
         public override MyObjectBuilder_EntityBase GetObjectBuilder(bool copy = false) { return copy ? (MyObjectBuilder_EntityBase)_objectBuilder.Clone() : _objectBuilder; }
 
-        private class Context<T> where T: struct, IComparable<T>
+        private interface IContext
         {
+            string propertyId { get; }
+            HashSet<string> Clients { get; set; }
+            bool ValueChange(Sandbox.ModAPI.Ingame.IMyFunctionalBlock value);
+        }
+        private class Context<T> : IContext where T : struct, IComparable<T>
+        {
+            public string propertyId { get; private set; }
             public T Value { get; set; }
             public HashSet<string> Clients { get; set; }
 
-            public Context()
+            private Context() { }
+            public Context(Sandbox.ModAPI.Ingame.IMyFunctionalBlock block, string propertyId, string connectionId)
             {
+                this.propertyId = propertyId;
                 Clients = new HashSet<string>();
-            }
-            public Context(string connectionId) : base()
-            {
                 Clients.Add(connectionId);
+                Value = block.GetValue<T>(propertyId);
             }
 
-            public bool Change(T value)
+            public bool ValueChange(Sandbox.ModAPI.Ingame.IMyFunctionalBlock block)
             {
+                T value = block.GetValue<T>(propertyId);
                 if (Value.Equals(value))
                     return false;
 

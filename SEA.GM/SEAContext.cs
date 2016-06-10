@@ -94,10 +94,10 @@ namespace SEA.GM.Context
                 return null;
         }
 
-        public void DoOut(uint id, string value, IList<string> userIds)
+        public void DoOut(uint id, string value, IList<string> connectionIds)
         {
             if (sea_p_online)
-                externalDoHandler(id, value, userIds);
+                externalDoHandler(id, value, connectionIds);
         }
 
         /* ! Runs in the main thread ! */

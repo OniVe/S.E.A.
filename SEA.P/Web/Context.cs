@@ -684,7 +684,7 @@ namespace SEA.P.Web
             }
         }
 
-        private void DoIn(uint id, string value, IList<string> userIds)
+        private void DoIn(uint id, string value, IList<string> connectionIds)
         {
             if (id == 0)
                 switch (value)
@@ -694,12 +694,13 @@ namespace SEA.P.Web
                         sea_gm_online = false;
                         reconnectionTimer.Enabled = true;
                         break;
+                    /*etc*/
                 }
 
-            if (userIds == null || userIds.Count == 0)
+            if (connectionIds == null || connectionIds.Count == 0)
                 seaHubContext.Clients.All.doAsync(id, value);
             else
-                seaHubContext.Clients.Users(userIds).doAsync(id, value);
+                seaHubContext.Clients.Clients(connectionIds).doAsync(id, value);
         }
 
         public string DoOut(Command command, out ExecuteCode executeCode)
