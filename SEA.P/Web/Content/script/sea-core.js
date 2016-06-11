@@ -97,28 +97,28 @@ var Hub = (function (){
 			},
 			Game:{
                 /*Timeout: 2sec, Max message size: 4MB */
-				transmit               : function ( value /*object*/ )    { return seaHub.server.transmitAsync(value); },/*send the value to other clients*/
+				transmit               : function ( value /*object*/ )		{ return seaHub.server.transmitAsync(value); },/*send the value to other clients*/
 				
-                getBlockProperties     : function ( eId )                 { return seaHub.server.doAsync(10, Utilities.tryStringifyJSON( eId )).pipe(Utilities.tryParseJSON); },
-				getBlockPropertiesBool : function ( eId )                 { return seaHub.server.doAsync(11, Utilities.tryStringifyJSON( eId )).pipe(Utilities.tryParseJSON); },
-				getBlockPropertiesFloat: function ( eId )                 { return seaHub.server.doAsync(12, Utilities.tryStringifyJSON( eId )).pipe(Utilities.tryParseJSON); },
-				getBlockActons         : function ( eId )                 { return seaHub.server.doAsync(13, Utilities.tryStringifyJSON( eId )).pipe(Utilities.tryParseJSON); },
+                getBlockProperties     : function ( eId )					{ return seaHub.server.doAsync(10, Utilities.tryStringifyJSON( eId )).pipe(Utilities.tryParseJSON); },
+				getBlockPropertiesBool : function ( eId )					{ return seaHub.server.doAsync(11, Utilities.tryStringifyJSON( eId )).pipe(Utilities.tryParseJSON); },
+				getBlockPropertiesFloat: function ( eId )					{ return seaHub.server.doAsync(12, Utilities.tryStringifyJSON( eId )).pipe(Utilities.tryParseJSON); },
+				getBlockActons         : function ( eId )					{ return seaHub.server.doAsync(13, Utilities.tryStringifyJSON( eId )).pipe(Utilities.tryParseJSON); },
 				
-				setValueBool           : function ( eId, property, value ){ return seaHub.server.doAsync(31, Utilities.tryStringifyJSON( {eId: eId, propId: property, value: value} )).pipe(Utilities.tryParseJSON); },
-				setValueFloat          : function ( eId, property, value ){ return seaHub.server.doAsync(32, Utilities.tryStringifyJSON( {eId: eId, propId: property, value: value} )).pipe(Utilities.tryParseJSON); },
-                setBlockAction         : function ( eId, action )         { return seaHub.server.doAsync(33, Utilities.tryStringifyJSON( {eId: eId, action: action} )).pipe(Utilities.tryParseJSON); },
+				setValueBool           : function ( eId, property, value )	{ return seaHub.server.doAsync(31, Utilities.tryStringifyJSON( {eId: eId, propId: property, value: value} )).pipe(Utilities.tryParseJSON); },
+				setValueFloat          : function ( eId, property, value )	{ return seaHub.server.doAsync(32, Utilities.tryStringifyJSON( {eId: eId, propId: property, value: value} )).pipe(Utilities.tryParseJSON); },
+                setBlockAction         : function ( eId, action )			{ return seaHub.server.doAsync(33, Utilities.tryStringifyJSON( {eId: eId, action: action} )).pipe(Utilities.tryParseJSON); },
 
-                getValueBool           : function ( eId, property )       { return seaHub.server.doAsync(21, Utilities.tryStringifyJSON( {eId: eId, propId: property} )).pipe(Utilities.tryParseJSON); },
-                getValueFloat          : function ( eId, property )       { return seaHub.server.doAsync(22, Utilities.tryStringifyJSON( {eId: eId, propId: property} )).pipe(Utilities.tryParseJSON); },
+                getValueBool           : function ( eId, property )			{ return seaHub.server.doAsync(21, Utilities.tryStringifyJSON( {eId: eId, propId: property} )).pipe(Utilities.tryParseJSON); },
+                getValueFloat          : function ( eId, property )			{ return seaHub.server.doAsync(22, Utilities.tryStringifyJSON( {eId: eId, propId: property} )).pipe(Utilities.tryParseJSON); },
 				Grid:{
 					getAll : function (){ return seaHub.server.doAsync(1, "").pipe(Utilities.tryParseJSON); }
 				},
 				Control:{
 					getAll : function ( gridId ){ return seaHub.server.doAsync(2, Utilities.tryStringifyJSON(gridId)).pipe(Utilities.tryParseJSON); }
 				},
-                getGroupBlocks         : function ( gridId, groupName )   { return seaHub.server.doAsync(3 , Utilities.tryStringifyJSON( {gridId: gridId, groupName: groupName} )).pipe(Utilities.tryParseJSON); },
-                addValueTracking       : function ( eId, property, func ) { return propertyValueTracking.add(eId, property, func); },
-                removeValueTracking    : function ( /*eId, property, func*/)    { return propertyValueTracking(eId, property, func); }
+                getGroupBlocks         : function ( gridId, groupName )		{ return seaHub.server.doAsync(3 , Utilities.tryStringifyJSON( {gridId: gridId, groupName: groupName} )).pipe(Utilities.tryParseJSON); },
+                addValueTracking       : function ( eId, property, func )	{ return propertyValueTracking.add(eId, property, func); },
+                removeValueTracking    : function ( /*eId, property, func*/){ return propertyValueTracking.remove(eId, property, func); }
 			},
 			errorCodeString: function ( code ){
 				
@@ -183,11 +183,11 @@ var Hub = (function (){
         	if ($.type(func) !== "function" || !property || !eId) return;
 
         	var callback = this._getCallback(eId, property, true);
-        	if (callback.list.has(func))
-        		return;
+        	if (!callback.list.has(func)) {
 
-        	callback.add(func);
-        	callback.count++;
+        		callback.list.add(func);
+        		callback.count++;
+        	}
 			seaHub.server.doAsync(41, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);
         },
         remove	: function ( /*eId, property, func*/ ){
@@ -200,7 +200,7 @@ var Hub = (function (){
         				return;
 
         			callback.count--;
-        			callback.remove(arguments[2]);
+        			callback.list.remove(arguments[2]);
 
         			if (callback.count == 0)
         				this.remove(arguments[0], arguments[1]);
@@ -227,7 +227,7 @@ var Hub = (function (){
         	var callback;
         	switch (arguments.length){
         		case 1: callback = this._getCallback(eId.eId, eId.propId, false); if (callback) callback.list.fire(eId.value); return;
-        		case 3: callback = this._getCallback(eId, property, false); if (callback) callback.list.fire(value); return;
+        		case 3: callback = this._getCallback(eId, property, false);	if (callback) callback.list.fire(value); return;
         	}
         }
     };

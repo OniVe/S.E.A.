@@ -320,9 +320,6 @@ namespace SEA.GM.Managers
 
         public bool AddValueTracking(long entityId, string propertyId, string connectionId)
         {
-            if (entityId != 103696244364501297)
-                return false;
-
             var block = GetTerminalBlock(entityId);
             if (block == null)
                 return false;

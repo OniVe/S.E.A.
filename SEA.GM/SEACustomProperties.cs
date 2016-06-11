@@ -276,8 +276,8 @@ namespace SEA.GM
 
             isInit = true;
 
-            //Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;//Why does not work on all blocks?? (Or is triggered once)
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
+            //NeedsUpdate |= MyEntityUpdateEnum.EACH_10TH_FRAME;//Why does not work on all blocks?? (Or is triggered once)
+            NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME;
         }
 
         public override void UpdateAfterSimulation()
@@ -288,7 +288,6 @@ namespace SEA.GM
             if (frameCounter == 0)
             {
                 frameCounter = 19;
-
                 try
                 {
                     foreach (var element in propertis.Values)
