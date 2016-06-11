@@ -172,7 +172,7 @@ var Hub = (function (){
 
     		if (!callback)
     			if (create)
-    				callbacks[property] = callback = $.Callbacks("unique memory");
+    				callbacks[property] = callback = { list: $.Callbacks("memory"), count: 0 };
     			else
     				return null;
 
@@ -182,23 +182,33 @@ var Hub = (function (){
 
         	if ($.type(func) !== "function" || !property || !eId) return;
 
-        	this._getCallback(eId, property, true).add(func);
+        	var callback = this._getCallback(eId, property, true);
+        	if (callback.list.has(func))
+        		return;
 
-			return seaHub.server.doAsync(41, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);
+        	callback.add(func);
+        	callback.count++;
+			seaHub.server.doAsync(41, Utilities.tryStringifyJSON( {connId: connectionId, eId: eId, propId: property} )).pipe(Utilities.tryParseJSON);
         },
         remove	: function ( /*eId, property, func*/ ){
 
         	switch (arguments.length) {
         		case 3:
 
-        			var callback = _getCallback(arguments[0], arguments[1], false);
-        			if (callback)
-        				callback.remove(arguments[2]);
+        			var callback = this._getCallback(arguments[0], arguments[1], false);
+        			if (!callback || !callback.list.has(arguments[2]))
+        				return;
+
+        			callback.count--;
+        			callback.remove(arguments[2]);
+
+        			if (callback.count == 0)
+        				this.remove(arguments[0], arguments[1]);
 
         			break;
         		case 2:
 
-        			var callbacks = _getEntityCallbacks(arguments[0]);
+        			var callbacks = this._getEntityCallbacks(arguments[0]);
         			if (callbacks)
         				delete callbacks[arguments[1]];
 
@@ -216,8 +226,8 @@ var Hub = (function (){
 			
         	var callback;
         	switch (arguments.length){
-        		case 1: callback = this._getCallback(eId.eId, eId.propId, false); if (callback) callback.fire(eId.value); return;
-        		case 3: callback = this._getCallback(eId, property, false); if (callback) callback.fire(value); return;
+        		case 1: callback = this._getCallback(eId.eId, eId.propId, false); if (callback) callback.list.fire(eId.value); return;
+        		case 3: callback = this._getCallback(eId, property, false); if (callback) callback.list.fire(value); return;
         	}
         }
     };

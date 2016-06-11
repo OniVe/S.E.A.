@@ -343,7 +343,7 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 		minValue     : 0,
 		maxValue     : 100,
 		defaultValue : 0,
-		externalValue: null
+		externalValue: 0
 	},
 	_minLength: 70,
 	
@@ -418,6 +418,10 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 			"touchend .track": "_touchEnd"
 		});
 	},
+	_destroy: function (){
+
+		Hub.Game.removeValueTracking(this.options.eId, this.options.property, this._externalValueUpdate);
+	},
 
 	_do: function (){
 		
@@ -450,7 +454,7 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
     },
     _externalValueUpdate: function (value) {
 
-    	this.options.externalValue = value;
+    	this.options.externalValue = this.options.roundValue ? Math.round(value) : Math.round(value * 100) / 100;
     	this.setValueLabel(this.options.value + " / " + this.options.externalValue);
     },
 	_touchStart: function ( event ){
