@@ -33,7 +33,23 @@ height:100%;
 background-color:rgb(151,175,207);
 }
 .sea-slider > .track > .slider.touchend {background-color:rgb(151,175,207) !important;}
-.sea-slider > .track  > .slider.touchstart {background-color:rgb(62,95,138) !important;}
+.sea-slider > .track > .slider.touchstart {background-color:rgb(62,95,138) !important;}
+
+.sea-slider > .track > .indicator {
+position:absolute;
+}
+.sea-slider > .track > .indicator.hl{
+top:-3px;
+bottom:-3px;
+border-top:solid 2px rgb(151,175,207);
+border-bottom:solid 2px rgb(151,175,207);
+}
+.sea-slider > .track > .indicator.vl{
+left:-3px;
+right:-3px;
+border-left:solid 2px rgb(151,175,207);
+border-right:solid 2px rgb(151,175,207);
+}
 
 .sea-switch{}
 .sea-switch > .track{
@@ -51,7 +67,7 @@ height:100%;
 background-color:rgb(151,175,207);
 }
 .sea-switch > .track > .slider.touchend{background-color:rgb(151,175,207) !important;}
-.sea-switch > .track  > .slider.touchstart{background-color:rgb(62,95,138) !important;}
+.sea-switch > .track > .slider.touchstart{background-color:rgb(62,95,138) !important;}
 
 .sea-handwheel{
 padding:0;
