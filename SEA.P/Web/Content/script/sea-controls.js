@@ -956,7 +956,7 @@ $.widget( "controlunit.sea_angle_controller", $.sea_ui.controlunit, {
 	},
 	_valueToPosition: function (){
 
-	    this.label.text(this.options.convert === 0 ? (this.options.value < 0 ? 360 + this.options.value : this.options.value) : this.options.value);
+	    this.label.text(this.options.convert === 0 ? (this.options.value < 0 ? Math.round((360.001 + this.options.value) * 100) / 100 : this.options.value) : this.options.value);
 	    this._elementAngle(this.arrow, this.options.value);
 	},
 	_anglePlusMinusPi: function ( angle ){
