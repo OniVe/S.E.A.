@@ -209,7 +209,7 @@ namespace SEA.GM
     public class PropertyValueTracking : MyGameLogicComponent
     {
         private bool isInit = false;
-        private byte frameCounter = 0;
+        private uint frameCounter = 0;
         private MyObjectBuilder_EntityBase _objectBuilder;
 
         private string entityId;
@@ -285,9 +285,9 @@ namespace SEA.GM
             if (!isInit)
                 return;
 
-            if (frameCounter == 0)
+            if (frameCounter == 0u)
             {
-                frameCounter = 19;
+                frameCounter = 19u;//20fps
                 try
                 {
                     foreach (var element in propertis.Values)
