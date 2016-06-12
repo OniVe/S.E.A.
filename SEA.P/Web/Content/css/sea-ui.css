@@ -273,11 +273,7 @@ z-index:10000;
 #sea_dashboard > .sea-ui-control-wrapper > .label-wraper > .label{
 position:absolute;
 cursor:pointer;
-width:200px;
-height:35px;
-margin-left:-82.5px;
 text-align:center !important;
-white-space:normal !important;
 z-index:1;
 }
 #sea_dashboard > .sea-ui-control-wrapper > .label-wraper.vertical > .label{
@@ -286,15 +282,6 @@ z-index:1;
 -ms-transform:rotate(-90deg);
 -o-transform:rotate(-90deg);
 transform:rotate(-90deg);
-}
-#sea_dashboard > .sea-ui-control-wrapper > .label-wraper > .handle{
-position:absolute;
-background-color:transparent;
-width:35px;
-height:35px;
-top:0;
-left:0;
-z-index:2;
 }
 
 .sea-sidebar-panel{

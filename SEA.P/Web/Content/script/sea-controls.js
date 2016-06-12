@@ -74,11 +74,11 @@ $.widget( "sea_ui.controlunit", {
                 titleLabel = $("<div class='label' class='position:absolute;'>" + self.options.title + "</div>");
                 self.titleLabelWraper = $("<div class='label-wraper".join20(self.options.titleLabel === 2 ? "vertical" : null) + " sea-text' style='position:absolute;'></div>")
                     .append(titleLabel)
-                    .append("<div class='handle'></div>")
+                    //.append("<div class='handle'></div>")
                     .appendTo(self.element)
                     .draggable({
                         containment  : "#sea_dashboard",
-                        handle       : ".handle",
+                        //handle       : ".handle",
                         scroll       : false,
                         snap         : ".sea-ui-control-wrapper",
                         delay        : 500,
@@ -97,11 +97,11 @@ $.widget( "sea_ui.controlunit", {
                 self.valueLabel = $("<div class='label' class='position:absolute;'>???</br>???</div>");
                 self.valueLabelWraper = $("<div class='label-wraper".join20(self.options.valueLabel === 2 ? "vertical" : null) + " sea-text' style='position:absolute;'></div>")
                     .append(self.valueLabel)
-                    .append("<div class='handle'></div>")
+                    //.append("<div class='handle'></div>")
                     .appendTo(self.element)
                     .draggable({
                         containment: "#sea_dashboard",
-                        handle: ".handle",
+                        //handle: ".handle",
                         scroll: false,
                         snap: ".sea-ui-control-wrapper",
                         delay: 500,
@@ -121,8 +121,8 @@ $.widget( "sea_ui.controlunit", {
 				if($.type(self._afterCreate) === "function"){
 
 				    self._afterCreate();
-				    //if (titleLabel) titleLabel.attr("style", "position:absolute;margin-left:" + Math.round(17.5 - titleLabel.width() / 2) + "px;margin-top:" + Math.round(17.5 - titleLabel.height() / 2) + "px;");
-				    //if (self.valueLabel) self.valueLabel.attr("style", "position:absolute;margin-left:" + Math.round(17.5 - self.valueLabel.width() / 2) + "px;margin-top:" + Math.round(17.5 - self.valueLabel.height() / 2) + "px;");
+				    if (titleLabel) titleLabel.attr("style", "position:absolute;margin-left:" + Math.round(17.5 - titleLabel.width() / 2) + "px;margin-top:" + Math.round(17.5 - titleLabel.height() / 2) + "px;");
+				    if (self.valueLabel) self.valueLabel.attr("style", "position:absolute;margin-left:" + Math.round(17.5 - self.valueLabel.width() / 2) + "px;margin-top:" + Math.round(17.5 - self.valueLabel.height() / 2) + "px;");
                 }
 			});
         });
@@ -266,8 +266,11 @@ $.widget( "sea_ui.controlunit", {
     },
     setValueLabel: function (value, isHTML){
 
-        if(this.valueLabel)
+        if (this.valueLabel) {
+
             isHTML ? this.valueLabel.html(value) : this.valueLabel.text(value);
+            this.valueLabel.attr("style", "position:absolute;margin-left:" + Math.round(17.5 - this.valueLabel.width() / 2) + "px;margin-top:" + Math.round(17.5 - this.valueLabel.height() / 2) + "px;");
+        }
     }
 });
 
