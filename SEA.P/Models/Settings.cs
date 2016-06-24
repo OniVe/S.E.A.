@@ -19,9 +19,11 @@ namespace SEA.P.Models
                     var portNode = xDoc.SelectSingleNode("//appSettings/add[@key='" + key + "']");
                     if (portNode == null)
                         Sandbox.MySandboxGame.Log.WriteLineAndConsole("S.E.A: Attribute <add key=\"" + key + "\"> not found in file \"SEA.P.dll.config\". Set on the default value.");
-
-                    var portAttribute = portNode.Attributes["value"];
-                    return portAttribute == null ? null : portAttribute.Value;
+                    else
+                    {
+                        var portAttribute = portNode.Attributes["value"];
+                        return portAttribute == null ? null : portAttribute.Value;
+                    }
                 }
                 catch (Exception ex)
                 {

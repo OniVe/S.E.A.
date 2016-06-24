@@ -60,6 +60,7 @@ namespace SEA.P.Web
         }
         public void Stop()
         {
+            Sandbox.MySandboxGame.Log.WriteLineAndConsole("S.E.A: Web server Stop");
             isRun = false;
             if (Host != null)
             {

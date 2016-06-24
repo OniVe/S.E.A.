@@ -1,15 +1,15 @@
-﻿using System;
-using Sandbox;
+﻿using Sandbox;
 using VRage.Plugins;
 using SEA.P.Web;
 
 namespace SEA.P
 {
+    [PackageInfo]
     public sealed class Plugin : IPlugin
     {
         private Server webServer;
 
-        public void Init( object gameInstance )
+        public void Init(object gameInstance)
         {
             MySandboxGame.Log.WriteLineAndConsole("S.E.A: Initializing Web Server");
             var port = Models.Settings.ServerPort;
@@ -38,5 +38,13 @@ namespace SEA.P
             if (webServer != null)
                 webServer.Stop();
         }
+    }
+
+    public class PackageInfoAttribute : System.Attribute
+    {
+        public readonly string UserName = "OniVe";
+        public readonly string RepositoryName = "S.E.A.";
+        public readonly string ReleaseFileName = "S.E.A.zip";
+        public readonly string PackageFileName = "package.json";
     }
 }
