@@ -4,7 +4,7 @@ using VRage.Game.Components;
 
 namespace SEA.GM
 {
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 10000)]
+    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, 0)]
     public class SEABase : MySessionComponentBase
     {
         private bool initialized = false;

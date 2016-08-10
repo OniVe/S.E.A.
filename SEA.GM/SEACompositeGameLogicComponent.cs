@@ -121,9 +121,9 @@ namespace SEA.GM.GameLogic
                     return (SEACompositeGameLogicComponent)component;
                 else
                 {
-                    var new_component = new SEACompositeGameLogicComponent(entity);
-                    new_component.Add(component);
+                    SEACompositeGameLogicComponent new_component = new SEACompositeGameLogicComponent(entity);
                     entity.GameLogic.Container.Add<MyGameLogicComponent>(new_component);
+                    new_component.Add(component);
                     return (SEACompositeGameLogicComponent)new_component;
                 }
 
