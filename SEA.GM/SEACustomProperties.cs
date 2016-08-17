@@ -57,6 +57,64 @@ namespace SEA.GM
                             return context.Limit - block.CurrentPosition;
                         })
                     );
+
+                #region ReadOnly TerminalBlock Propertis
+
+                /** IMyBatteryBlock **/
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyBatteryBlock, TerminalBlock<Sandbox.ModAPI.Ingame.IMyBatteryBlock>>.ControlProperty("Readonly CurrentStoredPower",
+                    (context) => context.Block.CurrentStoredPower, null,
+                    (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyBatteryBlock>(entity), null);
+
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyBatteryBlock, TerminalBlock<Sandbox.ModAPI.Ingame.IMyBatteryBlock>>.ControlProperty("Readonly CurrentInput",
+                    (context) => context.Block.CurrentInput, null,
+                    (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyBatteryBlock>(entity), null);
+
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyBatteryBlock, TerminalBlock<Sandbox.ModAPI.Ingame.IMyBatteryBlock>>.ControlProperty("Readonly CurrentOutput",
+                    (context) => context.Block.CurrentOutput, null,
+                    (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyBatteryBlock>(entity), null);
+
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyBatteryBlock, TerminalBlock<Sandbox.ModAPI.Ingame.IMyBatteryBlock>>.ControlProperty("Readonly IsCharging",
+                    (context) => context.Block.IsCharging, null,
+                    (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyBatteryBlock>(entity), null);
+
+                /**  IMyOxygenTank **/
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyOxygenTank, TerminalBlock<Sandbox.ModAPI.Ingame.IMyOxygenTank>>.ControlProperty("Readonly OxygenLevel",
+                   (context) => context.Block.GetOxygenLevel(), null,
+                   (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyOxygenTank>(entity), null);
+
+                /**  IMyProductionBlock **/
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyProductionBlock, TerminalBlock<Sandbox.ModAPI.Ingame.IMyProductionBlock>>.ControlProperty("Readonly IsProducing",
+                   (context) => context.Block.IsProducing, null,
+                   (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyProductionBlock>(entity), null);
+
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyProductionBlock, TerminalBlock<Sandbox.ModAPI.Ingame.IMyProductionBlock>>.ControlProperty("Readonly IsQueueEmpty",
+                   (context) => context.Block.IsQueueEmpty, null,
+                   (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyProductionBlock>(entity), null);
+
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyProductionBlock, TerminalBlock<Sandbox.ModAPI.Ingame.IMyProductionBlock>>.ControlProperty("Readonly NextItemId",
+                   (context) => (float)context.Block.NextItemId, null,
+                   (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyProductionBlock>(entity), null);
+
+                /**  IMyReactor **/
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyReactor, TerminalBlock<Sandbox.ModAPI.Ingame.IMyReactor>>.ControlProperty("Readonly CurrentOutput",
+                   (context) => context.Block.CurrentOutput, null,
+                   (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyReactor>(entity), null);
+
+                /**  IMyShipConnector **/
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyShipConnector, TerminalBlock<Sandbox.ModAPI.Ingame.IMyShipConnector>>.ControlProperty("Readonly IsConnected",
+                   (context) => context.Block.IsConnected, null,
+                   (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyShipConnector>(entity), null);
+
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyShipConnector, TerminalBlock<Sandbox.ModAPI.Ingame.IMyShipConnector>>.ControlProperty("Readonly IsLocked",
+                   (context) => context.Block.IsLocked, null,
+                   (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyShipConnector>(entity), null);
+
+                /**  IMyUserControllableGun **/
+                CustomProperty<Sandbox.ModAPI.Ingame.IMyUserControllableGun, TerminalBlock<Sandbox.ModAPI.Ingame.IMyUserControllableGun>>.ControlProperty("Readonly IsShooting",
+                   (context) => context.Block.IsShooting, null,
+                   (entity) => new TerminalBlock<Sandbox.ModAPI.Ingame.IMyUserControllableGun>(entity), null);
+
+                #endregion
             }
             catch (Exception ex)
             {
@@ -65,10 +123,10 @@ namespace SEA.GM
         }
     }
 
-    public class CustomProperty<T, U> : MyGameLogicComponent where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock where U : CustomPropertyContext
+    public class CustomProperty<TBlock, TContext> : MyGameLogicComponent where TBlock : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock where TContext : CustomPropertyContext
     {
         internal MyObjectBuilder_EntityBase _objectBuilder;
-        internal U context;
+        internal TContext context;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
@@ -87,18 +145,21 @@ namespace SEA.GM
         /// <param name="constructor">new U(entity) !System.Activator not allowed in scipt</param>
         /// <param name="initiator">Like context.init(...)</param>
         /// <returns></returns>
-        private static U GetContext(IMyEntity entity, Func<IMyEntity, U> constructor, Action<U> initiator)
+        private static TContext GetContext(IMyEntity entity, Func<IMyEntity, TContext> constructor, Action<TContext> initiator)
         {
             var entityGameLogic = SEACompositeGameLogicComponent.Get(entity);
 
-            CustomProperty<T, U> component;
-            component = entityGameLogic.GetAs<CustomProperty<T, U>>();
+            CustomProperty<TBlock, TContext> component;
+            component = entityGameLogic.GetAs<CustomProperty<TBlock, TContext>>();
             if (component != null)
                 return component.context;
 
-            component = new CustomProperty<T, U>() { context = constructor(entity) };
+            component = new CustomProperty<TBlock, TContext>() { context = constructor(entity) };
             entityGameLogic.Add(component);
-            initiator(component.context);
+
+            if (initiator != null)
+                initiator(component.context);
+
             component.Init(entity.GetObjectBuilder());
 
             return component.context;
@@ -112,14 +173,18 @@ namespace SEA.GM
         /// <param name="setter"></param>
         /// <param name="constructor">new U(entity) !System.Activator not allowed in scipt</param>
         /// <param name="initiator">Like context.init(...)</param>
-        public static void ControlProperty(string id, Func<U, float> getter, Action<U, float> setter, Func<IMyEntity, U> constructor, Action<U> initiator)
+        public static void ControlProperty<TType>(string id, Func<TContext, TType> getter, Action<TContext, TType> setter, Func<IMyEntity, TContext> constructor, Action<TContext> initiator)
         {
-            var property = MyAPIGateway.TerminalControls.CreateProperty<float, T>(id);
+            var property = MyAPIGateway.TerminalControls.CreateProperty<TType, TBlock>(id);
             property.SupportsMultipleBlocks = true;
             property.Getter = (block) => getter(GetContext(block, constructor, initiator));
-            property.Setter = (block, value) => setter(GetContext(block, constructor, initiator), value);
 
-            MyAPIGateway.TerminalControls.AddControl<T>(property);
+            if (setter == null)
+                property.Setter = (block, value) => { /* Void */ };
+            else
+                property.Setter = (block, value) => setter(GetContext(block, constructor, initiator), value);
+
+            MyAPIGateway.TerminalControls.AddControl<TBlock>(property);
         }
     }
 
@@ -295,10 +360,16 @@ namespace SEA.GM
                         {
                             tempStringBuilder.Length = 0;
                             doOut(1,
-                                tempStringBuilder.JObjectStringKeyValuePair(
-                                    "eId", entityId,
-                                    "propId", element.propertyId,
-                                    "value", element.ToString()).ToString(),
+                                tempStringBuilder
+                                    .JObjectStart()
+                                    .JStringKeyValuePair(
+                                        "eId", entityId,
+                                        "propId", element.propertyId)
+                                    .JSplit()
+                                    .JKeyValuePair(
+                                        "value", element.ToString())
+                                    .JObjectEnd()
+                                    .ToString(),
                                 element.Clients.ToArray());
                         }
                 }
@@ -343,8 +414,20 @@ namespace SEA.GM
 
             public override string ToString()
             {
-                return Value.ToString();
+                return Convert.ToString(Value, SEAUtilities.CultureInfoUS).ToLower();
             }
         }
+    }
+
+    public class TerminalBlock<T> : CustomPropertyContext where T : class, Sandbox.ModAPI.Ingame.IMyFunctionalBlock
+    {
+        public T Block { get; private set; }
+
+        public TerminalBlock(IMyEntity entity)
+        {
+            this.Block = entity as T;
+        }
+
+        internal override void Update() { return; }
     }
 }
