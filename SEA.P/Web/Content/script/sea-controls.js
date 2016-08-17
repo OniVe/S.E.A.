@@ -344,7 +344,7 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
         width        : 35,
 		height       : 70,
 		property     : "",
-	    //inverse     : false,
+	    metricPrefix : 999,
 		value        : 0,
 		roundValue   : false,
 		minValue     : 0,
@@ -360,14 +360,25 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 	text : "#sea-control-slider",
 	order: 2,
 	optionsView: {
-		width       : {text: "#width", min: 35, max: 350},
-		height      : {text: "#height", min: 35, max: 350},
-		minValue    : {text: "#min"},
-		maxValue    : {text: "#max"},
-		defaultValue: {text: "#defaultValue"},
-		roundValue  : {text: "#sea-control-slider-round"},
-		//inverse     : {text: "#inverse" },
-		property    : {text: "#property", list: function ( response ){ if(this.controlId) Hub.Game.getBlockPropertiesFloat(this.controlId).always(response); }}
+		width        : {text: "#width", min: 35, max: 350},
+		height       : {text: "#height", min: 35, max: 350},
+		minValue     : {text: "#min"},
+		maxValue     : {text: "#max"},
+		defaultValue : {text: "#defaultValue"},
+		roundValue   : {text: "#sea-control-slider-round"},
+		metricPrefix : {text: "#sea-control-slider-metricPrefix", list: [
+            {text: "#sea-control-slider-metricPrefix-disable", value: 999},
+            {text: "#sea-control-slider-metricPrefix-base_1E-12", value: -4},
+            {text: "#sea-control-slider-metricPrefix-base_1E-9", value: -3},
+            {text: "#sea-control-slider-metricPrefix-base_1E-6", value: -2},
+            {text: "#sea-control-slider-metricPrefix-base_1E-3", value: -1},
+            {text: "#sea-control-slider-metricPrefix-base_1E0", value: 0},
+            {text: "#sea-control-slider-metricPrefix-base_1E3", value: 1},
+            {text: "#sea-control-slider-metricPrefix-base_1E6", value: 2},
+            {text: "#sea-control-slider-metricPrefix-base_1E9", value: 3},
+            {text: "#sea-control-slider-metricPrefix-base_1E12", value: 4}
+        ]},
+		property     : {text: "#property", list: function ( response ){ if(this.controlId) Hub.Game.getBlockPropertiesFloat(this.controlId).always(response); }}
 	},
 	
 	_afterCreate: function (){
@@ -398,6 +409,7 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 			touchKey    : vertical ? "pageY" : "pageX",
 			myPosPrefix : vertical ? "left top+" : "left+",
 			myPosSuffix : vertical ? "" : " top",
+		    useMetricPrefix: this.options.metricPrefix < 999
 		};
 		this.touchPositionUsing = $.proxy(function ( pos ){
 					
@@ -450,7 +462,7 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
             if(value === null)
                 return;
             
-            var _value = self.options.roundValue ? Math.round(value) : Math.round(value * 100) / 100;
+            var _value = self.settings.useMetricPrefix ? value : (self.options.roundValue ? Math.round(value) : Math.round(value * 100) / 100);
             
             if(_value > self.options.maxValue)
                 _value = self.options.maxValue;
@@ -472,7 +484,7 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
         if (value === undefined)
             return;
 
-    	this.options.externalValue = this.options.roundValue ? Math.round(value) : Math.round(value * 100) / 100;
+        this.options.externalValue = this.settings.useMetricPrefix ? value : (this.options.roundValue ? Math.round(value) : Math.round(value * 100) / 100);
 
     	var pos;
     	if (this.options.externalValue <= this.options.minValue)
@@ -559,13 +571,12 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 			val = this.settings.vertical ? this.options.minValue : this.options.maxValue;
 		else{
 			
-			val = this.options.roundValue ? 
-				Math.round(this.settings.vertical ?
-					this.options.maxValue + (this.settings.pos / this.settings.maxPos) * (this.options.minValue - this.options.maxValue) :
-					this.options.minValue + (this.settings.pos / this.settings.maxPos) * (this.options.maxValue - this.options.minValue)) :
-				Math.round((this.settings.vertical ?
-					this.options.maxValue + (this.settings.pos / this.settings.maxPos) * (this.options.minValue - this.options.maxValue) :
-					this.options.minValue + (this.settings.pos / this.settings.maxPos) * (this.options.maxValue - this.options.minValue)) * 100) / 100;
+		    val = this.settings.vertical ?
+                this.options.maxValue + (this.settings.pos / this.settings.maxPos) * (this.options.minValue - this.options.maxValue) :
+                this.options.minValue + (this.settings.pos / this.settings.maxPos) * (this.options.maxValue - this.options.minValue);
+
+		    if(!this.settings.useMetricPrefix)
+		        val = this.options.roundValue ? Math.round(val) : (Math.round(val * 100) / 100);
 			
             if(val > this.options.maxValue)
                 val = this.options.maxValue;
@@ -613,7 +624,9 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 	},
 	_setValueLabel: function () {
 
-		this.setValueLabel(this.options.value + "</br>" + this.options.externalValue, true);
+	    this.setValueLabel(this.settings.useMetricPrefix ?
+            (Utilities.formattedValueInMetricPrefix(this.options.value, this.options.metricPrefix, "", this.options.roundValue) + "</br>" + Utilities.formattedValueInMetricPrefix(this.options.externalValue, this.options.metricPrefix, "", this.options.roundValue)) :
+            (this.options.value + "</br>" + this.options.externalValue), true);
 	}
 });
 
@@ -687,6 +700,7 @@ $.widget( "controlunit.sea_switch", $.sea_ui.controlunit, {
 			this.slider.css(this.settings.posKey, pos[this.settings.posKey]);
 		}, this);
 		
+		this._externalValueUpdate = $.proxy(this._externalValueUpdate, this);
         this._valueToPosition();
         this._syncValue();
         
@@ -715,9 +729,20 @@ $.widget( "controlunit.sea_switch", $.sea_ui.controlunit, {
                 return;
             
             self.options.value = value;
-            if(self._valueToPosition())
-                self.setValueLabel(self.options.inverse ? !self.options.value : self.options.value ? L("#on") : L("#off"));
+            self._valueToPosition();
+            self.setValueLabel(self.options.inverse ? !self.options.value : self.options.value ? L("#on") : L("#off"));
         });
+
+        Hub.Game.addValueTracking(this.options.eId, this.options.property, this._externalValueUpdate);
+    },
+    _externalValueUpdate: function (value) {
+
+        if (value === undefined)
+            return;
+
+        this.options.value = value;
+        this._valueToPosition();
+        this.setValueLabel(this.options.inverse ? !this.options.value : this.options.value ? L("#on") : L("#off"));
     },
 	_touchStart: function ( event ){
 		
@@ -725,7 +750,7 @@ $.widget( "controlunit.sea_switch", $.sea_ui.controlunit, {
 
 	        this.slider.attr('class', 'slider touchstart');
 	        this.settings.startPos = this.slider.position()[this.settings.posKey] - event.originalEvent.targetTouches[0][this.settings.touchKey];
-
+	        
 	        return false;
         }
 	},
@@ -907,7 +932,7 @@ $.widget( "controlunit.sea_angle_controller", $.sea_ui.controlunit, {
     _touchStart: function ( event ){
 		
 		if(this._allowEvents(event)){
-		    
+
 		    this.settings.centerPos = this.circle.offset();
 		    this.settings.centerPos.left += this.settings.cxy;
 		    this.settings.centerPos.top += this.settings.cxy;
