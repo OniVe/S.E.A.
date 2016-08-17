@@ -1,9 +1,12 @@
 ﻿
 var Utilities = (function () {
-    var regexpGroupId = /^{.*}$/i;
+    var regexpGroupId = /^{.*}$/i,
+        metricPrefixes = ["p", "n", "μ", "m", "", "k", "M", "G", "T"],
+        metricFactor = [1E-12, 1E-9, 1E-6, 1E-3, 1, 1E3, 1E6, 1E9, 1E12],
+        metricFactorLength = metricFactor.length;
 
     return {
-		normalizeNumeric: function( v, mi, ma ){
+		normalizeNumeric: function ( v, mi, ma ){
 			
 			switch(($.type(mi) === "number" ? 1 : 0) + ($.type(ma) === "number" ? 2 : 0)){
 				case 1 : return v < mi ? mi : v;
@@ -11,6 +14,21 @@ var Utilities = (function () {
 				case 3 : return v < mi ? mi : (v > ma ? ma : v);
 				default: return v;
 			}
+		},
+		formattedValueInMetricPrefix: function (value, base, metricName, roundValue) {
+
+		    if ((typeof value) !== "number")
+		        return value.toString();
+
+		    var absValue = Math.abs(value), i = 1;
+
+		    for (; i < metricFactorLength; ++i)
+		        if (absValue < metricFactor[i])
+		            break;
+
+		    --i;
+		    value /= metricFactor[i];
+		    return (roundValue ? Math.round(value) : (Math.round(value * 100) / 100)).toString() + " " + metricPrefixes[Math.clamp(i - base, 0, metricFactorLength)] + metricName;
 		},
 		isGroupId: function ( eId ){ return regexpGroupId.test(eId); },
 		tryStringifyJSON: function ( value ){
@@ -23,7 +41,7 @@ var Utilities = (function () {
 				return null;
 			try{ return jQuery.parseJSON(value); }
 			catch(err){ return null; }
-		}
+		},
     }
 }());
 
