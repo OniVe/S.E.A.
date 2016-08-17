@@ -14,7 +14,7 @@ namespace SEA.P
             MySandboxGame.Log.WriteLineAndConsole("S.E.A: Initializing Web Server");
             var port = Models.Settings.ServerPort;
             webServer = new Server(port);
-            if (webServer != null && webServer.Start())
+            if (webServer?.Start() == true)
             {
                 MySandboxGame.Log.WriteLineAndConsole("S.E.A: Web Server is running");
                 if (Models.Settings.launchBrowserOnStartup)
@@ -33,11 +33,7 @@ namespace SEA.P
         {
             //throw new NotImplementedException();
         }
-        public void Dispose()
-        {
-            if (webServer != null)
-                webServer.Stop();
-        }
+        public void Dispose() => webServer?.Stop();
     }
 
     public class PackageInfoAttribute : System.Attribute
