@@ -81,7 +81,12 @@ $.extend(String.prototype, {
 });
 
 $.extend(Math, {
-    PIx2: Math.PI * 2
+    PIx2: Math.PI * 2,
+    clamp: function (value, min, max) {
+        value = (value > max) ? max : value;
+        value = (value < min) ? min : value;
+        return value;
+    }
 });
 
 /**
