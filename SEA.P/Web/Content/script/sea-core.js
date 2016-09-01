@@ -15,7 +15,7 @@ var Utilities = (function () {
 				default: return v;
 			}
 		},
-		formattedValueInMetricPrefix: function (value, base, metricName, roundValue) {
+		formattedValueInMetricPrefix: function (value, base, unitPrefix, roundValue) {
 
 		    if ((typeof value) !== "number")
 		        return value.toString();
@@ -28,7 +28,7 @@ var Utilities = (function () {
 
 		    --i;
 		    value /= metricFactor[i];
-		    return (roundValue ? Math.round(value) : (Math.round(value * 100) / 100)).toString() + " " + metricPrefixes[Math.clamp(i - base, 0, metricFactorLength)] + metricName;
+		    return (roundValue ? Math.round(value) : (Math.round(value * 100) / 100)).toString() + " " + metricPrefixes[Math.clamp(i - base, 0, metricFactorLength)] + unitPrefix;
 		},
 		isGroupId: function ( eId ){ return regexpGroupId.test(eId); },
 		tryStringifyJSON: function ( value ){

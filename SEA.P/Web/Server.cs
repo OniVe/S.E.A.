@@ -12,7 +12,7 @@ namespace SEA.P.Web
         private bool isRun = false;
         public bool IsRun => isRun;
 
-        public Server( int port )
+        public Server(int port)
         {
             startOptions = new StartOptions();
             startOptions.AppStartup = "http://+";
@@ -45,15 +45,6 @@ namespace SEA.P.Web
             catch (Exception ex)
             {
                 Sandbox.MySandboxGame.Log.WriteLineAndConsole("S.E.A: Web server start error...");
-                /*if (startOptions.Urls != null)
-                {
-                    errorMsg.AppendLine("Urls: ");
-                    if (!string.IsNullOrEmpty(startOptions.AppStartup))
-                        errorMsg.AppendLine("url: " + startOptions.AppStartup .ToString()+ (startOptions.Port > 0 ? ":" + startOptions.Port.ToString() : ""));
-
-                    foreach (string url in startOptions.Urls)
-                        errorMsg.AppendLine("url: " + url);
-                }*/
                 Sandbox.MySandboxGame.Log.WriteLineAndConsole(Utilities.GetExceptionString(ex));
                 return false;
             }
@@ -62,12 +53,9 @@ namespace SEA.P.Web
         {
             Sandbox.MySandboxGame.Log.WriteLineAndConsole("S.E.A: Web server Stop");
             isRun = false;
-            if (Host != null)
-            {
-                Hubs.seaHub.context.Dispose();
-                Host.Dispose();
-                GlobalHost.DependencyResolver.Dispose();
-            }
+            Hubs.seaHub.context?.Dispose();
+            Host?.Dispose();
+            GlobalHost.DependencyResolver?.Dispose();
         }
         ~Server()
         {

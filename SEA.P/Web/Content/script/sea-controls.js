@@ -176,7 +176,11 @@ $.widget( "sea_ui.controlunit", {
             return;
 	    }
 	},
-	
+	_eIdIsGroup: function (){
+
+	    return $.type(this.options.eId) === "object";
+	},
+
 	unitOptions: function (){
 		
 		var key, options = {};
@@ -297,6 +301,8 @@ $.widget( "controlunit.sea_button", $.sea_ui.controlunit, {
 	
 	_afterCreate: function (){
 		
+	    if (this._eIdIsGroup()) this.options.eId.aggr = false;
+
 		this.button = $("<div class='button touchend'></div>");
 		
 		this.element
@@ -383,6 +389,8 @@ $.widget( "controlunit.sea_slider", $.sea_ui.controlunit, {
 	
 	_afterCreate: function (){
 		
+	    if (this._eIdIsGroup()) this.options.eId.aggr = false;
+
         var vertical = this.options.height >= this.options.width;
 		if(this.options[vertical ? "height" : "width"] < this._minLength)
 			this.options[vertical ? "height" : "width"] = this._minLength;
@@ -658,6 +666,8 @@ $.widget( "controlunit.sea_switch", $.sea_ui.controlunit, {
 	
     _afterCreate: function (){
 		
+        if (this._eIdIsGroup()) this.options.eId.aggr = false;
+
 		var vertical = this.options.height >= this.options.width;
 		if(this.options[vertical ? "height" : "width"] < this._minLength)
 			this.options[vertical ? "height" : "width"] = this._minLength;
@@ -855,6 +865,8 @@ $.widget( "controlunit.sea_angle_controller", $.sea_ui.controlunit, {
     
     _afterCreate: function (){
 		
+        if (this._eIdIsGroup()) this.options.eId.aggr = false;
+
         var cxy = Math.round(this.options.diameter / 2), protractor = "<g class='protractor'>", splitStep = 15, minAngle = -180, maxAngle = 180;
         this.options.diameter = cxy * 2;
         

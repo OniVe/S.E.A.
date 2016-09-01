@@ -1745,7 +1745,7 @@ $.extend(proto._elements, {
 			for(var i = 0; i < arr.length; ++i)
 				$("<option>", {
 					"text" : arr[i].text,
-					"value": arr[i].type === "group" ? '{"id":"'+ self.options.gridEntityId +'","name":"'+ arr[i].eId +'"}' : arr[i].eId,
+					"value": arr[i].type === "group" ? '{"id":"' + self.options.gridEntityId + '","name":"' + arr[i].eId + '","aggr":false}' : arr[i].eId,
 					"type" : arr[i].type/* [block, group] */
 				}).appendTo(self.field);
 			
