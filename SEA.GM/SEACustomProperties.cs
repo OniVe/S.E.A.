@@ -17,6 +17,8 @@ namespace SEA.GM
         {
             try
             {
+                #region DeltaLimitSwitch Propertis
+
                 CustomProperty<Sandbox.ModAPI.Ingame.IMyMotorStator, DeltaLimitSwitch<Sandbox.ModAPI.Ingame.IMyMotorStator>>.ControlProperty("Virtual Angle",
                     (context) => MyMath.RadiansToDegrees(context.Value),
                     (context, value) => context.Value = MyMath.DegreesToRadians(value),
@@ -57,6 +59,8 @@ namespace SEA.GM
                             return context.Limit - block.CurrentPosition;
                         })
                     );
+
+                #endregion
 
                 #region ReadOnly TerminalBlock Propertis
 
@@ -329,9 +333,9 @@ namespace SEA.GM
                     element.Value.Clients.Remove(connectionId);
         }
 
-        public override void Init(MyObjectBuilder_EntityBase objectBuilder)
+        public void Init(VRage.Game.ModAPI.Ingame.IMyEntity entity)
         {
-            _objectBuilder = objectBuilder;
+            _objectBuilder = Sandbox.ModAPI.MyAPIGateway.Entities.GetEntityById(entity.EntityId).GetObjectBuilder();
 
             block = Entity as Sandbox.ModAPI.Ingame.IMyFunctionalBlock;
             entityId = block.EntityId.ToString();
