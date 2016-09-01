@@ -26,7 +26,7 @@ namespace SEA.GM.Managers
             this.doOut = doOut;
         }
 
-        private IMyGridTerminalSystem GetTerminalSystem(long entityId)
+        private Sandbox.ModAPI.Ingame.IMyGridTerminalSystem GetTerminalSystem(long entityId)
         {
             IMyEntity entity;
             if (MyAPIGateway.Entities.TryGetEntityById(entityId, out entity))
@@ -69,13 +69,18 @@ namespace SEA.GM.Managers
                 groupsCache[groupKey] = group;
             }
 
+            var blocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
             if (first)
             {
-                var block = group.Blocks.FirstOrDefault(x => x.HasLocalPlayerAccess());
+                group.GetBlocks(blocks);
+                var block = blocks.FirstOrDefault(x => x.HasLocalPlayerAccess());
                 return block == null ? null : new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>() { block };
             }
             else
-                return group.Blocks.Where(x => x.HasLocalPlayerAccess()).ToList();
+            {
+                group.GetBlocks(blocks, x => x.HasLocalPlayerAccess());
+                return blocks;
+            }
         }
 
         public void ClearCache()
@@ -104,12 +109,16 @@ namespace SEA.GM.Managers
             var gts = GetTerminalSystem(entityId);
             if (gts != null)
             {
-                var blockGroups = new List<IMyBlockGroup>();
+                var blockGroups = new List<Sandbox.ModAPI.Ingame.IMyBlockGroup>();
+                var gBlocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
 
                 gts.GetBlockGroups(blockGroups);
                 for (var i = 0; i < blockGroups.Count; ++i)
                     if (blockGroups[i].HasLocalPlayerAccess())
-                        blocksList.Add(new BlockView<EntityType>() { type = EntityType.group, id = blockGroups[i].Name, name = blockGroups[i].Name + " [" + blockGroups[i].Blocks.Count.ToString() + "]" });
+                    {
+                        blockGroups[i].GetBlocks(gBlocks);
+                        blocksList.Add(new BlockView<EntityType>() { type = EntityType.group, id = blockGroups[i].Name, name = blockGroups[i].Name + " [" + gBlocks.Count.ToString() + "]" });
+                    }
 
                 var blocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
 
@@ -280,7 +289,8 @@ namespace SEA.GM.Managers
                 return blockList;
 
             for (int i = 0; i < blocks.Count; ++i)
-                blockList.Add(new BlockView<string>() { type = blocks[i].GetType().ToString(), id = blocks[i].EntityId.ToString(SEAUtilities.CultureInfoUS), name = blocks[i].Name });
+                blockList.Add(new BlockView<string>() { type = blocks[i].GetType().ToString(), id = blocks[i].EntityId.ToString(SEAUtilities.CultureInfoUS), name = blocks[i].CustomName });
+
             return blockList;
         }
 
@@ -323,7 +333,7 @@ namespace SEA.GM.Managers
             var block = GetTerminalBlock(entityId);
             if (block == null)
                 return false;
-            
+
             var entityGameLogic = GameLogic.SEACompositeGameLogicComponent.Get(block);
 
             PropertyValueTracking component;
@@ -332,7 +342,7 @@ namespace SEA.GM.Managers
             {
                 component = new PropertyValueTracking(doOut);
                 entityGameLogic.Add(component);
-                component.Init(block.GetObjectBuilder());
+                component.Init(block);
             }
 
             return component.Add(connectionId, propertyId);
@@ -412,11 +422,15 @@ namespace SEA.GM.Managers
         }
         public static bool AccesIsAllowed(this Sandbox.ModAPI.Ingame.IMyBlockGroup self, long playerId)
         {
-            return self.Blocks.Any(x => x.AccesIsAllowed(playerId));
+            var blocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
+            self.GetBlocks(blocks);
+            return blocks.Any(x => x.AccesIsAllowed(playerId));
         }
         public static bool HasLocalPlayerAccess(this Sandbox.ModAPI.Ingame.IMyBlockGroup self)
         {
-            return self.Blocks.Any(x => x.HasLocalPlayerAccess());
+            var blocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
+            self.GetBlocks(blocks);
+            return blocks.Any(x => x.HasLocalPlayerAccess());
         }
     }
 

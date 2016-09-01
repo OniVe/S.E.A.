@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using VRage.Game.Components;
-using VRage.ModAPI;
 using VRage.ObjectBuilders;
 
 namespace SEA.GM.GameLogic
@@ -9,7 +8,7 @@ namespace SEA.GM.GameLogic
     {
         private HashSet<MyGameLogicComponent> m_logicComponents;
 
-        public SEACompositeGameLogicComponent(IMyEntity entity)
+        public SEACompositeGameLogicComponent(VRage.ModAPI.IMyEntity entity)
         {
             m_logicComponents = new HashSet<MyGameLogicComponent>();
         }
@@ -112,7 +111,7 @@ namespace SEA.GM.GameLogic
             return null;
         }
 
-        public static SEACompositeGameLogicComponent Get(IMyEntity entity)
+        public static SEACompositeGameLogicComponent Get(VRage.ModAPI.IMyEntity entity)
         {
             MyGameLogicComponent component;
 
@@ -131,6 +130,11 @@ namespace SEA.GM.GameLogic
             entity.GameLogic.Container.Add<MyGameLogicComponent>(component);
 
             return (SEACompositeGameLogicComponent)component;
+        }
+
+        public static SEACompositeGameLogicComponent Get(VRage.Game.ModAPI.Ingame.IMyEntity entity)
+        {
+            return Get(Sandbox.ModAPI.MyAPIGateway.Entities.GetEntityById(entity.EntityId));
         }
     }
 }
