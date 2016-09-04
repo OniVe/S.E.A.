@@ -320,7 +320,7 @@ $.widget( "sea_ui.sidebarmenu", {
 
 			    iControlUnitOptions.property("controlId", control.eId);
 			    if($.type(control.eId) === "object")
-			        control.eId = Utilities.tryStringifyJSON(control.eId);
+			        control.eId = Utilities.tryStringifyJSON($.extend({}, control.eId, { aggr: false }));
             }
 			
 			$("<div>")
@@ -1750,7 +1750,7 @@ $.extend(proto._elements, {
 				}).appendTo(self.field);
 			
 			if(self.options.value)
-				self.value(self.options.value);
+			    self.value(self.options.value);
 			
 			self._sea_select.fillOptionList.call(self, element.optionSelect, "control");
 		});
