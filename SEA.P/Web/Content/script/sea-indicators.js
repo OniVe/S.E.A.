@@ -63,16 +63,77 @@ $.widget("controlunit.sea_indicator_ordinal_scale", $.sea_ui.controlunit, {
         if (this.options[vertical ? "height" : "width"] < this._minLength)
             this.options[vertical ? "height" : "width"] = this._minLength;
         this.options.value = Utilities.normalizeNumeric(this.options.value, this.options.minValue, this.options.maxValue);
+        
+        var trackWidth     = this.options.width - 14.0,
+            trackHalfWidth = trackWidth / 2.0,
+            trackHeight    = this.options.height - 14.0,
+            trackHalfHeight= trackHeight / 2.0,
+            deltaLength    = (vertical ? trackHeight : trackWidth) / 20.0,
+            sectionLength  = deltaLength * 5.0,
+            trackSVG       = function (vertical, self) {
 
-
-
-        this.track = $("<div class='track'></div>");
-        this.slider = $("<div class='slider' style='" + (vertical ? "height:18" : "width:18") + "px;'></div>");
+                var s1 = "<use xlink:href='#s_" + self.uuid + "' transform='translate(#1)'></use>",
+                    s2 = "<use xlink:href='#gf4s_" + self.uuid + "' transform='translate(#1)'></use>";
+                return "<svg version='1.1' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns#' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:dc='http://purl.org/dc/elements/1.1/'"
+                    + (vertical
+                    ? ("width='" + trackWidth + "px' height='" + (trackHeight + 1) + "px' viewBox='0 -.5 " + trackWidth + " " + (trackHeight + 1) + "' style='position:absolute;'>"
+                    + "<def>"
+                        + "<path id='h_" + self.uuid + "' d='M" + trackHalfWidth + ",0 " + trackWidth + ",0' stroke-width='1px' stroke='#97afcf' fill='none'/>"
+                        + "<path id='s_" + self.uuid + "' d='M" + trackHalfWidth + ",0 " + (trackWidth - Math.round(trackHalfWidth / 3)) + ",0' stroke-width='1px' stroke='#97afcf' fill='none'/>"
+                        + "<g id='gf4s_" + self.uuid + "'>"
+                            + "<use xlink:href='#h_" + self.uuid + "'></use>"
+                            + s1.replace(/#1/g, "0," + deltaLength)
+                            + s1.replace(/#1/g, "0," + (deltaLength * 2))
+                            + s1.replace(/#1/g, "0," + (deltaLength * 3))
+                            + s1.replace(/#1/g, "0," + (deltaLength * 4))
+                        + "</g>"
+                    + "</def>"
+                    + "<use xlink:href='#gf4s_" + self.uuid + "'></use>"
+                    + s2.replace(/#1/g, "0," + sectionLength)
+                    + s2.replace(/#1/g, "0," + (sectionLength * 2))
+                    + s2.replace(/#1/g, "0," + (sectionLength * 3))
+                    + s2.replace(/#1/g, "0," + (sectionLength * 4))
+                    + "<path d='M" + trackHalfWidth + ",0 " + trackHalfWidth + "," + trackHeight + "' stroke-width='1px' stroke='#97afcf' fill='none'/>"
+                    + "</svg>")
+                    /*horizontal*/
+                    : ("width='" + (trackWidth + 1) + "px' height='" + trackHeight + "px' viewBox='-.5 0 " + (trackWidth + 1) + " " + trackHeight + "' style='position:absolute;'>"
+                    + "<def>"
+                        + "<path id='h_" + self.uuid + "' d='M0," + trackHalfHeight + " 0," + trackHeight + "' stroke-width='1px' stroke='#97afcf' fill='none'/>"
+                        + "<path id='s_" + self.uuid + "' d='M0," + trackHalfHeight + " 0," + (trackHeight - Math.round(trackHalfHeight / 3)) + "' stroke-width='1px' stroke='#97afcf' fill='none'/>"
+                        + "<g id='gf4s_" + self.uuid + "'>"
+                            + "<use xlink:href='#h_" + self.uuid + "'></use>"
+                            + s1.replace(/#1/g, deltaLength + ",0")
+                            + s1.replace(/#1/g, (deltaLength * 2) + ",0")
+                            + s1.replace(/#1/g, (deltaLength * 3) + ",0")
+                            + s1.replace(/#1/g, (deltaLength * 4) + ",0")
+                        + "</g>"
+                    + "</def>"
+                    + "<use xlink:href='#gf4s_" + self.uuid + "'></use>"
+                    + s2.replace(/#1/g, sectionLength + ",0")
+                    + s2.replace(/#1/g, (sectionLength * 2) + ",0")
+                    + s2.replace(/#1/g, (sectionLength * 3) + ",0")
+                    + s2.replace(/#1/g, (sectionLength * 4) + ",0")
+                    + "<path d='M0," + trackHalfHeight + " " + trackWidth + "," + trackHalfHeight + "' stroke-width='1px' stroke='#97afcf' fill='none'/>"
+                    + "</svg>"));
+            },
+            sliderSVG      = function (vertical) {
+                
+                var l = vertical ? trackHalfWidth : trackHalfHeight;
+                return ("<svg version='1.1' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#' xmlns='http://www.w3.org/2000/svg' xmlns:cc='http://creativecommons.org/ns#' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:dc='http://purl.org/dc/elements/1.1/'"
+                    + "width='#1px' height='#1px' viewBox='0 0 #1 #1' style='position:absolute;" + (vertical ? "top:-#2px;" : "left:-#2px;") + "'>"
+                    + (vertical
+                    ? "<path d='M#1,#2L0,0v#1z' fill='rgba(62, 95, 138, .75)'/>"
+                    : "<path d='M#2,#1L0,0h#1z' fill='rgba(62, 95, 138, .75)'/>")
+                    + "</svg>").replace(/#1/g, l).replace(/#2/g, l / 2);
+            };
+        
+        this.track = $("<div class='track'>" + trackSVG(vertical, this) + "</div>")
+        this.slider = $("<div class='slider' style='" + (vertical ? "height:1" : "width:1") + "px;'>" + sliderSVG(vertical) + "</div>");
 
         this.element
 			.width(this.options.width)
 			.height(this.options.height)
-			.append($("<div class='sea-controlunit sea-indicator ordinal_scale'></div>")
+			.append($("<div class='sea-controlunit sea-indicator sea-ordinal_scale'></div>")
 				.append(this.track
 					.append(this.slider)));
 
