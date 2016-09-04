@@ -124,12 +124,12 @@ $.widget( "sea_ui.dashboard", {
 		var controlUnit, uid = control.id.toString();
 		if($.controlunit.hasOwnProperty(key)){
 			
-			options.pId = control.id;
-			options.eId = control.eId;
-			options.title = control.title;
+			options.pId       = control.id;
+			options.eId       = control.eId;
+			options.title     = control.title;
 			options.draggable = this.options.draggable;
-			options.editable = this.options.editable;
-			options.locked = this.options.locked;
+			options.editable  = this.options.editable;
+			options.locked    = this.options.locked;
 			
 			controlUnit = $.controlunit[key](options);
 		}
