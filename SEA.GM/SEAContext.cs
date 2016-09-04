@@ -37,6 +37,8 @@ namespace SEA.GM.Context
 
                 { 21, new Algorithm(GetValueBool) },
                 { 22, new Algorithm(GetValueFloat) },
+                { 23, new Algorithm(GetValueFloatMinimum) },
+                { 24, new Algorithm(GetValueFloatMaximum) },
 
                 { 31, new Algorithm(SetValueBool) },
                 { 32, new Algorithm(SetValueFloat) },
@@ -142,6 +144,7 @@ namespace SEA.GM.Context
                 {
                     entityKey.IsGroup = true;
                     entityKey.GroupName = (string)_eId["name"];
+                    entityKey.Aggregate = _eId.ContainsKey("aggr") ? (bool)_eId["aggr"] : false;
                     return long.TryParse((string)_eId["id"], System.Globalization.NumberStyles.Integer, SEAUtilities.CultureInfoUS, out entityKey.EntityId) && entityKey.EntityId > 0;
                 }
             }
@@ -285,7 +288,7 @@ namespace SEA.GM.Context
                     TryParseEntityId(_value["eId"], out entityKey))
                 {
                     return entityKey.IsGroup ?
-                        false :
+                        sessionManager.AddValueTracking(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"], entityKey.Aggregate, (string)_value["connId"]) :
                         sessionManager.AddValueTracking(entityKey.EntityId, (string)_value["propId"], (string)_value["connId"]);
                 }
             }
@@ -303,14 +306,14 @@ namespace SEA.GM.Context
                     {
                         if (TryParseEntityId(_value["eId"], out entityKey))
                             return entityKey.IsGroup ?
-                                false :
+                                sessionManager.RemoveValueTracking(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"], entityKey.Aggregate, (string)_value["connId"]) :
                                 sessionManager.RemoveValueTracking(entityKey.EntityId, (string)_value["propId"], (string)_value["connId"]);
                     }
                     else if (_value.ContainsKey("eId"))
                     {
                         if (TryParseEntityId(_value["eId"], out entityKey))
                             return entityKey.IsGroup ?
-                                false :
+                                sessionManager.RemoveValueTracking(entityKey.EntityId, entityKey.GroupName, entityKey.Aggregate, (string)_value["connId"]) :
                                 sessionManager.RemoveValueTracking(entityKey.EntityId, (string)_value["connId"]);
                     }
                 }
@@ -346,8 +349,42 @@ namespace SEA.GM.Context
                     TryParseEntityId(_value["eId"], out entityKey))
                 {
                     return entityKey.IsGroup ?
-                        sessionManager.GetValueFloat(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"]) :
+                        sessionManager.GetValueFloat(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"], entityKey.Aggregate) :
                         sessionManager.GetValueFloat(entityKey.EntityId, (string)_value["propId"]);
+                }
+            }
+            return null;
+        }
+        private object GetValueFloatMinimum(object value)
+        {
+            if (value is Hashtable)
+            {
+                var _value = (Hashtable)value;
+                EntityKey entityKey;
+                if (_value.ContainsKey("eId") &&
+                    _value.ContainsKey("propId") &&
+                    TryParseEntityId(_value["eId"], out entityKey))
+                {
+                    return entityKey.IsGroup ?
+                        sessionManager.GetValueFloatMinimum(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"], _value.ContainsKey("aggr") ? (bool)_value["aggr"] : false) :
+                        sessionManager.GetValueFloatMinimum(entityKey.EntityId, (string)_value["propId"]);
+                }
+            }
+            return null;
+        }
+        private object GetValueFloatMaximum(object value)
+        {
+            if (value is Hashtable)
+            {
+                var _value = (Hashtable)value;
+                EntityKey entityKey;
+                if (_value.ContainsKey("eId") &&
+                    _value.ContainsKey("propId") &&
+                    TryParseEntityId(_value["eId"], out entityKey))
+                {
+                    return entityKey.IsGroup ?
+                        sessionManager.GetValueFloatMaximum(entityKey.EntityId, entityKey.GroupName, (string)_value["propId"], _value.ContainsKey("aggr") ? (bool)_value["aggr"] : false) :
+                        sessionManager.GetValueFloatMaximum(entityKey.EntityId, (string)_value["propId"]);
                 }
             }
             return null;
@@ -374,6 +411,7 @@ namespace SEA.GM.Context
             public bool IsGroup;
             public long EntityId;
             public string GroupName;
+            public bool Aggregate;
         }
     }
 }

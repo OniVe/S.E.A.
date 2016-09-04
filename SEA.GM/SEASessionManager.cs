@@ -22,7 +22,6 @@ namespace SEA.GM.Managers
         {
             blocksCache = new Dictionary<long, Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
             groupsCache = new Dictionary<CompositeKey, Sandbox.ModAPI.Ingame.IMyBlockGroup>();
-
             this.doOut = doOut;
         }
 
@@ -52,33 +51,40 @@ namespace SEA.GM.Managers
             return block;
         }
 
-        private List<Sandbox.ModAPI.Ingame.IMyTerminalBlock> GetGroupBlocks(long entityId, string groupName, bool first = false)
+        private Sandbox.ModAPI.Ingame.IMyBlockGroup GetBlockGroup(long entityId, string groupName)
         {
             var groupKey = new CompositeKey() { longId = entityId, stringId = groupName };
-            Sandbox.ModAPI.Ingame.IMyBlockGroup group;
-            if (!groupsCache.TryGetValue(groupKey, out group))
+            Sandbox.ModAPI.Ingame.IMyBlockGroup blockGroup;
+            if (!groupsCache.TryGetValue(groupKey, out blockGroup))
             {
                 var gts = GetTerminalSystem(entityId);
                 if (gts == null)
                     return null;
 
-                group = gts.GetBlockGroupWithName(groupName);
-                if (group == null)
+                blockGroup = gts.GetBlockGroupWithName(groupName);
+                if (blockGroup == null)
                     return null;
 
-                groupsCache[groupKey] = group;
+                groupsCache[groupKey] = blockGroup;
             }
+
+            return blockGroup;
+        }
+
+        private List<Sandbox.ModAPI.Ingame.IMyTerminalBlock> GetGroupBlocks(long entityId, string groupName, bool first = false)
+        {
+            var blockGroup = GetBlockGroup(entityId, groupName);
 
             var blocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
             if (first)
             {
-                group.GetBlocks(blocks);
+                blockGroup.GetBlocks(blocks);
                 var block = blocks.FirstOrDefault(x => x.HasLocalPlayerAccess());
                 return block == null ? null : new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>() { block };
             }
             else
             {
-                group.GetBlocks(blocks, x => x.HasLocalPlayerAccess());
+                blockGroup.GetBlocks(blocks, x => x.HasLocalPlayerAccess());
                 return blocks;
             }
         }
@@ -319,13 +325,47 @@ namespace SEA.GM.Managers
 
             return block.GetValue<float>(propertyId);
         }
-        public float? GetValueFloat(long entityId, string groupName, string propertyId)
+        public float? GetValueFloat(long entityId, string groupName, string propertyId, bool aggregate = false)
         {
             var blocks = GetGroupBlocks(entityId, groupName, true);
             if (blocks == null || blocks.Count == 0)
                 return null;
             else
-                return blocks[0].GetValue<float>(propertyId);
+                return aggregate ? blocks.Sum(e => e.GetValue<float>(propertyId)) : blocks[0].GetValue<float>(propertyId);
+        }
+
+        public float? GetValueFloatMinimum(long entityId, string propertyId)
+        {
+            var block = GetTerminalBlock(entityId);
+            if (block == null)
+                return null;
+
+            return block.GetMinimum<float>(propertyId);
+        }
+        public float? GetValueFloatMinimum(long entityId, string groupName, string propertyId, bool aggregate = false)
+        {
+            var blocks = GetGroupBlocks(entityId, groupName, true);
+            if (blocks == null || blocks.Count == 0)
+                return null;
+            else
+                return aggregate ? blocks.Sum(e => e.GetMinimum<float>(propertyId)) : blocks[0].GetMinimum<float>(propertyId);
+        }
+
+        public float? GetValueFloatMaximum(long entityId, string propertyId)
+        {
+            var block = GetTerminalBlock(entityId);
+            if (block == null)
+                return null;
+
+            return block.GetMaximum<float>(propertyId);
+        }
+        public float? GetValueFloatMaximum(long entityId, string groupName, string propertyId, bool aggregate = false)
+        {
+            var blocks = GetGroupBlocks(entityId, groupName, true);
+            if (blocks == null || blocks.Count == 0)
+                return null;
+            else
+                return aggregate ? blocks.Sum(e => e.GetMaximum<float>(propertyId)) : blocks[0].GetMaximum<float>(propertyId);
         }
 
         public bool AddValueTracking(long entityId, string propertyId, string connectionId)
@@ -336,16 +376,55 @@ namespace SEA.GM.Managers
 
             var entityGameLogic = GameLogic.SEACompositeGameLogicComponent.Get(block);
 
-            PropertyValueTracking component;
-            component = entityGameLogic.GetAs<PropertyValueTracking>();
+            BlockPropertyValueTracking component;
+            component = entityGameLogic.GetAs<BlockPropertyValueTracking>();
             if (component == null)
             {
-                component = new PropertyValueTracking(doOut);
+                component = new BlockPropertyValueTracking(doOut);
                 entityGameLogic.Add(component);
                 component.Init(block);
             }
 
             return component.Add(connectionId, propertyId);
+        }
+        public bool AddValueTracking(long entityId, string groupName, string propertyId, bool aggregate, string connectionId)
+        {
+            var blockGroup = GetBlockGroup(entityId, groupName);
+            if (blockGroup == null)
+                return false;
+
+            if (aggregate)
+            {
+                var component = AggregateProperties.Static.Get(blockGroup);
+                if (component == null)
+                {
+                    var entityId_SB = new System.Text.StringBuilder(128);
+                    entityId_SB
+                        .JObjectStart()
+                        .JStringKeyValuePair(
+                            "id", entityId.ToString(),
+                            "name", groupName)
+                        .JSplit()
+                        .JKeyValuePair(
+                            "aggr", aggregate.ToString().ToLower())
+                        .JObjectEnd();
+
+                    component = new AggregatePropertyValueTracking(blockGroup, entityId_SB.ToString(), doOut);
+                    AggregateProperties.Static.Add(blockGroup, component);
+                }
+
+                return component.Add(connectionId, propertyId);
+            }
+            else
+            {
+                var blocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
+                blockGroup.GetBlocks(blocks);
+
+                if (blocks.Count == 0)
+                    return false;
+
+                return AddValueTracking(blocks[0].EntityId, propertyId, connectionId);
+            }
         }
 
         public bool RemoveValueTracking(long entityId, string propertyId, string connectionId)
@@ -356,8 +435,8 @@ namespace SEA.GM.Managers
 
             var entityGameLogic = GameLogic.SEACompositeGameLogicComponent.Get(block);
 
-            PropertyValueTracking component;
-            component = entityGameLogic.GetAs<PropertyValueTracking>();
+            BlockPropertyValueTracking component;
+            component = entityGameLogic.GetAs<BlockPropertyValueTracking>();
             if (component != null)
             {
                 component.Remove(connectionId, propertyId);
@@ -375,8 +454,8 @@ namespace SEA.GM.Managers
 
             var entityGameLogic = GameLogic.SEACompositeGameLogicComponent.Get(block);
 
-            PropertyValueTracking component;
-            component = entityGameLogic.GetAs<PropertyValueTracking>();
+            BlockPropertyValueTracking component;
+            component = entityGameLogic.GetAs<BlockPropertyValueTracking>();
             if (component != null)
             {
                 component.Remove(connectionId);
@@ -385,6 +464,65 @@ namespace SEA.GM.Managers
             }
 
             return true;
+        }
+
+        public bool RemoveValueTracking(long entityId, string groupName, string propertyId, bool aggregate, string connectionId)
+        {
+            var blockGroup = GetBlockGroup(entityId, groupName);
+            if (blockGroup == null)
+                return false;
+
+            if (aggregate)
+            {
+                var component = AggregateProperties.Static.Get(blockGroup);
+                if (component != null)
+                {
+                    component.Remove(connectionId, propertyId);
+                    if (component.IsEmpty)
+                        AggregateProperties.Static.Remove(blockGroup);
+                }
+
+                return true;
+            }
+            else
+            {
+                var blocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
+                blockGroup.GetBlocks(blocks);
+
+                if (blocks.Count == 0)
+                    return false;
+
+                return RemoveValueTracking(blocks[0].EntityId, propertyId, connectionId);
+            }
+        }
+        public bool RemoveValueTracking(long entityId, string groupName, bool aggregate, string connectionId)
+        {
+            var blockGroup = GetBlockGroup(entityId, groupName);
+            if (blockGroup == null)
+                return false;
+
+            if (aggregate)
+            {
+                var component = AggregateProperties.Static.Get(blockGroup);
+                if (component != null)
+                {
+                    component.Remove(connectionId);
+                    if (component.IsEmpty)
+                        AggregateProperties.Static.Remove(blockGroup);
+                }
+
+                return true;
+            }
+            else
+            {
+                var blocks = new List<Sandbox.ModAPI.Ingame.IMyTerminalBlock>();
+                blockGroup.GetBlocks(blocks);
+
+                if (blocks.Count == 0)
+                    return false;
+
+                return RemoveValueTracking(blocks[0].EntityId, connectionId);
+            }
         }
 
         public Hashtable GetValueColor(long entityId, string propertyId)

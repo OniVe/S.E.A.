@@ -20,6 +20,8 @@ namespace SEA.GM
             }
 
             SEACustomProperties.Init();
+            AggregateProperties.Init();
+
             Context = new SEAContext(out allowUpdate);
             SEAUtilities.Logging.Static.WriteLine("Initialized");
         }
@@ -27,6 +29,9 @@ namespace SEA.GM
         {
             if (!initialized && MyAPIGateway.Session != null)
                 Initialize();
+
+            if (AggregateProperties.IsInit)
+                AggregateProperties.Static.UpdateAfterSimulation();
 
             base.UpdateAfterSimulation();
         }
