@@ -46,6 +46,9 @@
     <Reference Include="Sandbox.Game">
       <HintPath>..\..\..\..\..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
     </Reference>
+    <Reference Include="SEA.P">
+      <HintPath>..\..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\SEA.P.dll</HintPath>
+    </Reference>
     <Reference Include="SpaceEngineers.ObjectBuilders">
       <HintPath>..\..\..\..\..\..\SteamLibrary\steamapps\common\SpaceEngineers\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
     </Reference>
