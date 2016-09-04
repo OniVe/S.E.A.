@@ -1,1 +1,21 @@
 ﻿
+.sea-indicator{
+border-color:transparent !important;
+}
+
+.sea-ordinal_scale{}
+.sea-ordinal_scale svg{
+width:auto;
+height:auto;
+}
+.sea-ordinal_scale > .track{
+position:relative;
+width:100%;
+height:100%;
+}
+.sea-ordinal_scale > .track > .slider{
+position:relative;
+width:100%;
+height:100%;
+background-color:transparent;
+}
