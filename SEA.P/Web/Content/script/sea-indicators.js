@@ -57,7 +57,11 @@ $.widget("controlunit.sea_indicator_ordinal_scale", $.sea_ui.controlunit, {
 
     _afterCreate: function () {
 
-        if (this._eIdIsGroup()) this.options.eId.aggr = true;
+        if (this._eIdIsGroup())
+            this.options.eId.aggr = true;
+
+        if (this.options.unitPrefix === undefined)
+            this.options.unitPrefix = "";
 
         var vertical = this.options.height >= this.options.width;
         if (this.options[vertical ? "height" : "width"] < this._minLength)
