@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://github.com/OniVe/S.E.A.">
+    <img src="https://img.shields.io/github/downloads/onive/s.e.a./latest/total.svg" alt="downloads"/>
+  </a>
+</p>
+
 # S.E.A.
 S.E.A. - Space Engineer Assistant, Workshop mod for the game "Space Engineers" http://steamcommunity.com/sharedfiles/filedetails/?id=680600621
 
