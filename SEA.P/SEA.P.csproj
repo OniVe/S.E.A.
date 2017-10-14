@@ -225,6 +225,14 @@
   <ItemGroup>
     <EmbeddedResource Include="Web\Content\css\sea-indicators.css" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="lib\Microsoft.AspNet.SignalR.Core.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\Microsoft.AspNet.SignalR.SystemWeb.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>

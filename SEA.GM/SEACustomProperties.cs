@@ -173,7 +173,7 @@ namespace SEA.GM
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             _objectBuilder = objectBuilder;
-            Entity.NeedsUpdate |= VRage.ModAPI.MyEntityUpdateEnum.EACH_FRAME;
+            NeedsUpdate |= VRage.ModAPI.MyEntityUpdateEnum.EACH_FRAME;
         }
 
         public override void UpdateBeforeSimulation() { context.Update(); }
