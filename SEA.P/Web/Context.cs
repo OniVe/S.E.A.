@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 
 namespace SEA.P.Web
 {
+
+
     public class StorageManager : IDisposable
     {
         private bool disposed = false;
@@ -694,7 +696,7 @@ namespace SEA.P.Web
                         sea_gm_online = false;
                         reconnectionTimer.Enabled = true;
                         break;
-                    /*etc*/
+                        /*etc*/
                 }
 
             if (connectionIds == null || connectionIds.Count == 0)

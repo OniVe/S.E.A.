@@ -13,13 +13,14 @@ namespace SEA.P.Web.Hubs
     public class seaHub : Hub
     {
         public static HUBContext context;
+        public static IStorage storage;
 
         public override Task OnConnected()
         {
             Clients.All.connect(Context.ConnectionId);
             return base.OnConnected();
         }
-        public override Task OnDisconnected( bool stopCalled )
+        public override Task OnDisconnected(bool stopCalled)
         {
             Clients.Others.onDisconnected(Context.ConnectionId);
             return base.OnDisconnected(stopCalled);
@@ -34,10 +35,10 @@ namespace SEA.P.Web.Hubs
 
         #region Worlds
 
-        public async Task<World> WorldGetAsync( int id ) => await context.Storage.Worlds.GetAsync(id);
+        public async Task<World> WorldGetAsync(int id) => await context.Storage.Worlds.GetAsync(id);//await storage.GetTable<TableWorlds>().GetAsync(id);
         public async Task<List<World>> WorldGetAllAsync() => await context.Storage.Worlds.GetAllAsync();
-        public async Task<List<World>> WorldGetWhereAsync( long extId ) => await context.Storage.Worlds.GetWhereAsync(extId);
-        public async Task<int> WorldAddAsync( World world )
+        public async Task<List<World>> WorldGetWhereAsync(long extId) => await context.Storage.Worlds.GetWhereAsync(extId);
+        public async Task<int> WorldAddAsync(World world)
         {
             world.Title = world.Title.Trim();
             var id = await context.Storage.Worlds.AddAsync(world);
@@ -48,7 +49,7 @@ namespace SEA.P.Web.Hubs
             }
             return id;
         }
-        public async Task<List<World>> WorldAddArrayAsync( List<World> worldList )
+        public async Task<List<World>> WorldAddArrayAsync(List<World> worldList)
         {
             var _worldList = await context.Storage.Worlds.AddAsync(worldList);
             if (_worldList != null && _worldList.Count > 0)
@@ -56,7 +57,7 @@ namespace SEA.P.Web.Hubs
 
             return _worldList;
         }
-        public async Task<int> WorldUpdateAsync( World world )
+        public async Task<int> WorldUpdateAsync(World world)
         {
             world.Title = world.Title.Trim();
             var id = await context.Storage.Worlds.UpdateAsync(world);
@@ -65,7 +66,7 @@ namespace SEA.P.Web.Hubs
 
             return id;
         }
-        public async Task<int> WorldDeleteAsync( int id )
+        public async Task<int> WorldDeleteAsync(int id)
         {
             var _id = await context.Storage.Worlds.DeleteAsync(id);
             if (_id > 0)
@@ -79,10 +80,10 @@ namespace SEA.P.Web.Hubs
 
         #region Grids
 
-        public async Task<Grid> GridGetAsync( int id ) => await context.Storage.Grids.GetAsync(id);
-        public async Task<List<Grid>> GridGetAllAsync( int pId ) => await context.Storage.Grids.GetAllAsync(pId);
-        public async Task<List<Grid>> GridGetWhereAsync( int pId, long extId ) => await context.Storage.Grids.GetWhereAsync(pId, extId);
-        public async Task<int> GridAddAsync( Grid grid )
+        public async Task<Grid> GridGetAsync(int id) => await context.Storage.Grids.GetAsync(id);
+        public async Task<List<Grid>> GridGetAllAsync(int pId) => await context.Storage.Grids.GetAllAsync(pId);
+        public async Task<List<Grid>> GridGetWhereAsync(int pId, long extId) => await context.Storage.Grids.GetWhereAsync(pId, extId);
+        public async Task<int> GridAddAsync(Grid grid)
         {
             grid.Title = grid.Title.Trim();
             var id = await context.Storage.Grids.AddAsync(grid);
@@ -93,7 +94,7 @@ namespace SEA.P.Web.Hubs
             }
             return id;
         }
-        public async Task<List<Grid>> GridAddArrayAsync( List<Grid> gridList )
+        public async Task<List<Grid>> GridAddArrayAsync(List<Grid> gridList)
         {
             var _gridList = await context.Storage.Grids.AddAsync(gridList);
             if (_gridList != null && _gridList.Count > 0)
@@ -101,7 +102,7 @@ namespace SEA.P.Web.Hubs
 
             return _gridList;
         }
-        public async Task<int> GridUpdateAsync( Grid grid )
+        public async Task<int> GridUpdateAsync(Grid grid)
         {
             grid.Title = grid.Title.Trim();
             var id = await context.Storage.Grids.UpdateAsync(grid);
@@ -110,7 +111,7 @@ namespace SEA.P.Web.Hubs
 
             return id;
         }
-        public async Task<int> GridDeleteAsync( int id )
+        public async Task<int> GridDeleteAsync(int id)
         {
             var _id = await context.Storage.Grids.DeleteAsync(id);
             if (_id > 0)
@@ -124,10 +125,10 @@ namespace SEA.P.Web.Hubs
 
         #region Controls
 
-        public async Task<Control> ControlGetAsync( int id ) => await context.Storage.Controls.GetAsync(id);
-        public async Task<List<Control>> ControlGetAllAsync( int pId ) => await context.Storage.Controls.GetAllAsync(pId);
-        public async Task<List<Control>> ControlGetWhereAsync( int pId, string extId ) => await context.Storage.Controls.GetWhereAsync(pId, extId);
-        public async Task<int> ControlAddAsync( Control control )
+        public async Task<Control> ControlGetAsync(int id) => await context.Storage.Controls.GetAsync(id);
+        public async Task<List<Control>> ControlGetAllAsync(int pId) => await context.Storage.Controls.GetAllAsync(pId);
+        public async Task<List<Control>> ControlGetWhereAsync(int pId, string extId) => await context.Storage.Controls.GetWhereAsync(pId, extId);
+        public async Task<int> ControlAddAsync(Control control)
         {
             control.Title = control.Title.Trim();
             var id = await context.Storage.Controls.AddAsync(control);
@@ -138,7 +139,7 @@ namespace SEA.P.Web.Hubs
             }
             return id;
         }
-        public async Task<List<Control>> ControlAddArrayAsync( List<Control> controlList )
+        public async Task<List<Control>> ControlAddArrayAsync(List<Control> controlList)
         {
             var _controlList = await context.Storage.Controls.AddAsync(controlList);
             if (_controlList != null && _controlList.Count > 0)
@@ -146,7 +147,7 @@ namespace SEA.P.Web.Hubs
 
             return _controlList;
         }
-        public async Task<int> ControlUpdateAsync( Control control )
+        public async Task<int> ControlUpdateAsync(Control control)
         {
             control.Title = control.Title.Trim();
             var id = await context.Storage.Controls.UpdateAsync(control);
@@ -155,7 +156,7 @@ namespace SEA.P.Web.Hubs
 
             return id;
         }
-        public async Task<int> ControlDeleteAsync( int id )
+        public async Task<int> ControlDeleteAsync(int id)
         {
             var _id = await context.Storage.Controls.DeleteAsync(id);
             if (_id > 0)
@@ -169,27 +170,27 @@ namespace SEA.P.Web.Hubs
 
         #region ControlsSettings
 
-        public async Task<List<string>> ControlSettingsKeysAsync( int pId ) => await context.Storage.ControlSettings.KeysAsync(pId);
-        public async Task<int> ControlSettingsSaveObjectAsync( ControlSettings controlSettings ) => await context.Storage.ControlSettings.SaveAsync(controlSettings);
-        public async Task<string> ControlSettingsLoadAsync( int pId, string id ) => await context.Storage.ControlSettings.LoadAsync(pId, id);
-        public async Task<int> ControlSettingsDeleteAsync( int pId, string id ) => await context.Storage.ControlSettings.DeleteAsync(pId, id);
+        public async Task<List<string>> ControlSettingsKeysAsync(int pId) => await context.Storage.ControlSettings.KeysAsync(pId);
+        public async Task<int> ControlSettingsSaveObjectAsync(ControlSettings controlSettings) => await context.Storage.ControlSettings.SaveAsync(controlSettings);
+        public async Task<string> ControlSettingsLoadAsync(int pId, string id) => await context.Storage.ControlSettings.LoadAsync(pId, id);
+        public async Task<int> ControlSettingsDeleteAsync(int pId, string id) => await context.Storage.ControlSettings.DeleteAsync(pId, id);
         #endregion
 
         #region Data
 
         public async Task<List<string>> DataKeysAsync() => await context.Storage.UserData.KeysAsync();
-        public async Task<int> DataSaveAsync( string id, string value ) => await context.Storage.UserData.SaveAsync(id, value);
-        public async Task<int> DataSaveObjectAsync( UserData userData ) => await context.Storage.UserData.SaveAsync(userData);
-        public async Task<string> DataLoadAsync( string id ) => await context.Storage.UserData.LoadAsync(id);
-        public async Task<int> DataDeleteAsync( string id ) => await context.Storage.UserData.DeleteAsync(id);
+        public async Task<int> DataSaveAsync(string id, string value) => await context.Storage.UserData.SaveAsync(id, value);
+        public async Task<int> DataSaveObjectAsync(UserData userData) => await context.Storage.UserData.SaveAsync(userData);
+        public async Task<string> DataLoadAsync(string id) => await context.Storage.UserData.LoadAsync(id);
+        public async Task<int> DataDeleteAsync(string id) => await context.Storage.UserData.DeleteAsync(id);
         #endregion
         #endregion
 
         #region Game
 
-        public Task TransmitAsync( JObject value ) => Clients.Others.onTransmit(value);
+        public Task TransmitAsync(JObject value) => Clients.Others.onTransmit(value);
 
-        public async Task<string> DoAsync( uint id, string value )
+        public async Task<string> DoAsync(uint id, string value)
         {
             try
             {

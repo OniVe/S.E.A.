@@ -83,9 +83,9 @@ namespace SEA.GM
                     (entity) => new TerminalBlock<SMI.IMyBatteryBlock>(entity), null);
 
                 /**  IMyOxygenTank **/
-                CustomProperty<SMI.IMyOxygenTank, TerminalBlock<SMI.IMyOxygenTank>>.ControlProperty("Readonly OxygenLevel",
-                   (context) => context.Block.GetOxygenLevel(), null,
-                   (entity) => new TerminalBlock<SMI.IMyOxygenTank>(entity), null);
+                //CustomProperty<SMI.IMyGasTank, TerminalBlock<SMI.IMyGasTank>>.ControlProperty("Readonly OxygenLevel",
+                //   (context) => context.Block.GetValue<>, null,
+                //   (entity) => new TerminalBlock<SMI.IMyGasTank>(entity), null);
 
                 /**  IMyProductionBlock **/
                 CustomProperty<SMI.IMyProductionBlock, TerminalBlock<SMI.IMyProductionBlock>>.ControlProperty("Readonly IsProducing",
@@ -107,11 +107,11 @@ namespace SEA.GM
 
                 /**  IMyShipConnector **/
                 CustomProperty<SMI.IMyShipConnector, TerminalBlock<SMI.IMyShipConnector>>.ControlProperty("Readonly IsConnected",
-                   (context) => context.Block.IsConnected, null,
+                   (context) => context.Block.Status == SMI.MyShipConnectorStatus.Connected, null,
                    (entity) => new TerminalBlock<SMI.IMyShipConnector>(entity), null);
 
                 CustomProperty<SMI.IMyShipConnector, TerminalBlock<SMI.IMyShipConnector>>.ControlProperty("Readonly IsLocked",
-                   (context) => context.Block.IsLocked, null,
+                   (context) => context.Block.Status == SMI.MyShipConnectorStatus.Connected, null,
                    (entity) => new TerminalBlock<SMI.IMyShipConnector>(entity), null);
 
                 /**  IMyUserControllableGun **/
@@ -132,6 +132,30 @@ namespace SEA.GM
                     (context) => context.Inventory.IsFull, null,
                     (entity) => new InventoryBlock<SMI.IMyCargoContainer>(entity), null);
 
+                /** IMyJumpDrive **/
+
+                CustomProperty<SMI.IMyJumpDrive, TerminalBlock<SMI.IMyJumpDrive>>.ControlProperty("Readonly CanJump",
+                    (context) => (context.Block.GetActionWithName("Jump") != null), null,
+                    (entity) => new TerminalBlock<SMI.IMyJumpDrive>(entity), null);
+
+                var blockAction = MyAPIGateway.TerminalControls.CreateAction<SMI.IMyJumpDrive>("Virtual Jump");
+                blockAction.Enabled = (x) => true;
+                blockAction.ValidForGroups = false;
+                blockAction.Name = new StringBuilder("Virtual Jump");
+                blockAction.Action = (block) =>
+                {
+                    var a = block.GetActionWithName("Jump");
+                    if (a != null) a.Apply(block);
+                };
+                MyAPIGateway.TerminalControls.AddAction<SMI.IMyJumpDrive>(blockAction);
+
+                //CustomAction<SMI.IMyJumpDrive, TerminalBlock<SMI.IMyJumpDrive>>.ControlAction("Virtual Jump",
+                //    (context) =>
+                //    {
+                //        var a = context.Block.GetActionWithName("Jump");
+                //        if (a != null) a.Apply(context.Block);
+                //    },
+                //    (entity) => new TerminalBlock<SMI.IMyJumpDrive>(entity), null);
                 #endregion
             }
             catch (Exception ex)
@@ -609,10 +633,9 @@ namespace SEA.GM
 
         public InventoryBlock(VRage.ModAPI.IMyEntity entity) : base(entity)
         {
-            Inventory = SMI.TerminalBlockExtentions.GetInventory(Block, 0);
+            Inventory = entity.GetInventory();
         }
     }
-
 
     public class AggregateProperties
     {

@@ -6,6 +6,16 @@ using System.Threading.Tasks;
 
 namespace SEA.P.Models.Enum
 {
+    public enum TableQueryCode : int
+    {
+        Success = 1,
+        InternalError = 2,
+        InvalidRequest = 3,
+        QueryError = 4,
+        ValueExist = 5,
+        ValueNotExist = 6
+    }
+
     public enum ErrorCode : int
     {
         InternalError = -101,
@@ -28,5 +38,10 @@ namespace SEA.P.Models.Enum
         NotInit = 0,
         Timeout = 2,
         Success = 10,
+    }
+
+    public static class ErrorCodeExtention
+    {
+        public static int ToInt(this ErrorCode self) => (int)self;
     }
 }
